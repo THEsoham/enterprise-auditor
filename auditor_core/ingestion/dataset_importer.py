@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from app.ingestion.pdf_loader import load_pdf
+from auditor_core.ingestion.pdf_loader import load_pdf
 
 
 DATASET_DIR = Path(

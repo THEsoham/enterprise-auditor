@@ -9,21 +9,21 @@ import gradio as gr
 BASE_DIR = Path(__file__).parent.resolve()
 sys.path.insert(0, str(BASE_DIR))
 
-from app.retrieval.qa_engine import QAEngine
-from app.retrieval.keyword_index import KeywordIndex
-from app.models.clause_extractor import ClauseExtractor
-from app.models.clause_analyzer import ClauseAnalyzer
-from app.models.risk_detector import RiskDetector
-from app.models.missing_clause import MissingClauseDetector
-from app.models.comparator import ClauseComparator
-from app.verification.verifier import Verifier
-from app.graph.knowledge_graph import KnowledgeGraph
-from app.models.report_generator import ReportGenerator
-from app.models.obligation_extractor import ObligationExtractor
-from app.ingestion.table_extractor import extract_tables
-from app.ingestion.image_extractor import render_page_as_image
-from app.models.vlm_analyzer import VLMAnalyzer
-from app.ingestion.ingest_single import ingest_single_pdf
+from auditor_core.retrieval.qa_engine import QAEngine
+from auditor_core.retrieval.keyword_index import KeywordIndex
+from auditor_core.models.clause_extractor import ClauseExtractor
+from auditor_core.models.clause_analyzer import ClauseAnalyzer
+from auditor_core.models.risk_detector import RiskDetector
+from auditor_core.models.missing_clause import MissingClauseDetector
+from auditor_core.models.comparator import ClauseComparator
+from auditor_core.verification.verifier import Verifier
+from auditor_core.graph.knowledge_graph import KnowledgeGraph
+from auditor_core.models.report_generator import ReportGenerator
+from auditor_core.models.obligation_extractor import ObligationExtractor
+from auditor_core.ingestion.table_extractor import extract_tables
+from auditor_core.ingestion.image_extractor import render_page_as_image
+from auditor_core.models.vlm_analyzer import VLMAnalyzer
+from auditor_core.ingestion.ingest_single import ingest_single_pdf
 
 
 # Initialize engines

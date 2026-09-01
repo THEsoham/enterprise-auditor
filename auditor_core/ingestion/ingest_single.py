@@ -1,9 +1,9 @@
 """Ingest a single new uploaded PDF contract into VectorStore and KeywordIndex."""
 
 from pathlib import Path
-from app.ingestion.pdf_loader import load_pdf
-from app.chunking.chunker import create_chunks, create_table_chunks
-from app.ingestion.table_extractor import extract_tables
+from auditor_core.ingestion.pdf_loader import load_pdf
+from auditor_core.chunking.chunker import create_chunks, create_table_chunks
+from auditor_core.ingestion.table_extractor import extract_tables
 
 
 def ingest_single_pdf(file_path: str, store, keyword_index) -> dict:

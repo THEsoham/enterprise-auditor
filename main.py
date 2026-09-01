@@ -4,21 +4,21 @@ import re
 
 import ollama
 
-from app.ingestion.pdf_loader import load_pdf
-from app.chunking.chunker import create_chunks
-from app.embeddings.vector_store import VectorStore
-from app.retrieval.keyword_index import KeywordIndex
-from app.retrieval.hybrid import HybridRetriever
-from app.retrieval.reranker import Reranker
-from app.retrieval.qa_engine import QAEngine
-from app.models.clause_extractor import ClauseExtractor
-from app.models.clause_analyzer import ClauseAnalyzer
-from app.models.risk_detector import RiskDetector
-from app.models.missing_clause import MissingClauseDetector
-from app.models.comparator import ClauseComparator
-from app.verification.verifier import Verifier
-from app.graph.knowledge_graph import KnowledgeGraph
-from app.evaluation.evaluator import Evaluator
+from auditor_core.ingestion.pdf_loader import load_pdf
+from auditor_core.chunking.chunker import create_chunks
+from auditor_core.embeddings.vector_store import VectorStore
+from auditor_core.retrieval.keyword_index import KeywordIndex
+from auditor_core.retrieval.hybrid import HybridRetriever
+from auditor_core.retrieval.reranker import Reranker
+from auditor_core.retrieval.qa_engine import QAEngine
+from auditor_core.models.clause_extractor import ClauseExtractor
+from auditor_core.models.clause_analyzer import ClauseAnalyzer
+from auditor_core.models.risk_detector import RiskDetector
+from auditor_core.models.missing_clause import MissingClauseDetector
+from auditor_core.models.comparator import ClauseComparator
+from auditor_core.verification.verifier import Verifier
+from auditor_core.graph.knowledge_graph import KnowledgeGraph
+from auditor_core.evaluation.evaluator import Evaluator
 
 
 # ============================================================

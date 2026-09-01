@@ -6,7 +6,7 @@ import time
 from collections import Counter
 from pathlib import Path
 
-from app.evaluation.cuad_loader import CUADLoader
+from auditor_core.evaluation.cuad_loader import CUADLoader
 
 
 class Evaluator:

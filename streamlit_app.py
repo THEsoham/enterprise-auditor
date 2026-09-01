@@ -5,25 +5,25 @@ import time
 from pathlib import Path
 import streamlit as st
 
-from app.embeddings.vector_store import VectorStore
-from app.retrieval.keyword_index import KeywordIndex
-from app.retrieval.hybrid import HybridRetriever
-from app.retrieval.reranker import Reranker
-from app.retrieval.qa_engine import QAEngine
-from app.models.clause_extractor import ClauseExtractor, CLAUSE_TYPES
-from app.models.clause_analyzer import ClauseAnalyzer
-from app.models.risk_detector import RiskDetector
-from app.models.missing_clause import MissingClauseDetector
-from app.models.comparator import ClauseComparator
-from app.verification.verifier import Verifier
-from app.graph.knowledge_graph import KnowledgeGraph
-from app.evaluation.evaluator import Evaluator
-from app.ingestion.table_extractor import extract_tables
-from app.ingestion.image_extractor import extract_images
-from app.models.vlm_analyzer import VLMAnalyzer
-from app.ingestion.ingest_single import ingest_single_pdf
-from app.models.report_generator import ReportGenerator
-from app.models.obligation_extractor import ObligationExtractor
+from auditor_core.embeddings.vector_store import VectorStore
+from auditor_core.retrieval.keyword_index import KeywordIndex
+from auditor_core.retrieval.hybrid import HybridRetriever
+from auditor_core.retrieval.reranker import Reranker
+from auditor_core.retrieval.qa_engine import QAEngine
+from auditor_core.models.clause_extractor import ClauseExtractor, CLAUSE_TYPES
+from auditor_core.models.clause_analyzer import ClauseAnalyzer
+from auditor_core.models.risk_detector import RiskDetector
+from auditor_core.models.missing_clause import MissingClauseDetector
+from auditor_core.models.comparator import ClauseComparator
+from auditor_core.verification.verifier import Verifier
+from auditor_core.graph.knowledge_graph import KnowledgeGraph
+from auditor_core.evaluation.evaluator import Evaluator
+from auditor_core.ingestion.table_extractor import extract_tables
+from auditor_core.ingestion.image_extractor import extract_images
+from auditor_core.models.vlm_analyzer import VLMAnalyzer
+from auditor_core.ingestion.ingest_single import ingest_single_pdf
+from auditor_core.models.report_generator import ReportGenerator
+from auditor_core.models.obligation_extractor import ObligationExtractor
 
 
 DATASET_DIR = Path(r"data/datasets/cuad_full/CUAD_v1/full_contract_pdf")
