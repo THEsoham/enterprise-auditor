@@ -1,0 +1,32 @@
+# Python & Virtual Environments
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Environment Variables & Secrets
+.env
+.env.*
+*.secret
+
+# Data & Datasets (Avoid uploading multi-gigabyte raw PDF & Vector DB dumps)
+data/chroma/
+data/datasets/
+data/extracted_images/
+data/rendered_pages/
+data/uploaded_contracts/
+
+# Streamlit & Local IDE
+.streamlit/secrets.toml
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS Artifacts
+.DS_Store
+Thumbs.db

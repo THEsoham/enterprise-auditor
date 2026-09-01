@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: enterprise_auditor_ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  auditor-web:
+    build: .
+    container_name: enterprise_auditor_web
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+      - "8501:8501"
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - ollama
+
+volumes:
+  ollama_data:
