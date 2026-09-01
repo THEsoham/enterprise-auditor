@@ -30,3 +30,7 @@ data/uploaded_contracts/
 # OS Artifacts
 .DS_Store
 Thumbs.db
+
+# Cloned Sub-repositories
+enterprise-auditor/
+
