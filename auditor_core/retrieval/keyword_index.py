@@ -21,9 +21,14 @@ class KeywordIndex:
 
         data = vector_store.get_all_documents()
 
-        self.chunk_ids = data["ids"]
-        self.documents = data["documents"]
-        self.metadatas = data["metadatas"]
+        self.chunk_ids = data.get("ids", [])
+        self.documents = data.get("documents", [])
+        self.metadatas = data.get("metadatas", [])
+
+        if not self.chunk_ids or not self.documents:
+            print("Notice: No documents found in ChromaDB store to build BM25 index.")
+            self.bm25 = None
+            return
 
         print(
             f"Tokenizing {len(self.chunk_ids)} chunks..."
@@ -33,6 +38,10 @@ class KeywordIndex:
             self._tokenize(doc)
             for doc in self.documents
         ]
+
+        if not tokenized or all(len(t) == 0 for t in tokenized):
+            self.bm25 = None
+            return
 
         self.bm25 = BM25Okapi(tokenized)
 

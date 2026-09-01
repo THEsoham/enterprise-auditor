@@ -1,12 +1,29 @@
+from pathlib import Path
 import chromadb
 import ollama
 
 
 class VectorStore:
 
-    def __init__(self):
+    def __init__(self, chroma_path=None):
+        # Resolve ChromaDB directory across root and subdirectories
+        if chroma_path:
+            chosen_path = Path(chroma_path)
+        else:
+            candidates = [
+                Path("data/chroma"),
+                Path("../data/chroma"),
+                Path(__file__).resolve().parent.parent.parent / "data" / "chroma",
+            ]
+            chosen_path = Path("data/chroma")
+            for c in candidates:
+                if c.exists() and any(c.iterdir()):
+                    chosen_path = c.resolve()
+                    break
+
+        self.persist_path = str(chosen_path)
         self.client = chromadb.PersistentClient(
-            path="data/chroma"
+            path=self.persist_path
         )
 
         self.collection = self.client.get_or_create_collection(
