@@ -424,3 +424,10 @@ app.mount("/data", StaticFiles(directory=str(data_dir)), name="data")
 web_dir = Path(__file__).parent / "web"
 web_dir.mkdir(exist_ok=True)
 app.mount("/", StaticFiles(directory=str(web_dir), html=True), name="web")
+
+
+if __name__ == "__main__":
+    import os
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("server:app", host="0.0.0.0", port=port, reload=False)
