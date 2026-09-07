@@ -2,7 +2,7 @@ import json
 import os
 import shutil
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Any, Union
 from fastapi import FastAPI, HTTPException, Query, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -136,7 +136,7 @@ class CompareRequest(BaseModel):
 
 class VerifyRequest(BaseModel):
     finding: str
-    evidence: List[str]
+    evidence: Union[List[Any], str, None] = []
 
 
 class GraphRequest(BaseModel):
@@ -156,7 +156,8 @@ async def get_stats():
         "total_documents": len(all_docs),
         "total_vectors": vector_count,
         "models": {
-            "llm": "qwen3.5:4b",
+            "llm_generation": "qwen3.5:4b",
+            "llm_verification": "llama3.1:8b",
             "embeddings": "nomic-embed-text:latest",
             "vlm": "minicpm-v"
         },
@@ -295,7 +296,21 @@ async def compare_clauses(req: CompareRequest):
 @app.post("/api/verify")
 async def verify_finding(req: VerifyRequest):
     """Verify finding against evidence with skeptical verifier LLM pass."""
-    result = verifier.verify(req.finding, req.evidence)
+    raw_evidence = req.evidence or []
+    if isinstance(raw_evidence, str):
+        cleaned_evidence = [raw_evidence] if raw_evidence.strip() else []
+    elif isinstance(raw_evidence, list):
+        cleaned_evidence = []
+        for e in raw_evidence:
+            if isinstance(e, str):
+                cleaned_evidence.append(e)
+            elif isinstance(e, dict):
+                cleaned_evidence.append(e.get("text", e.get("content", str(e))))
+            elif e is not None:
+                cleaned_evidence.append(str(e))
+    else:
+        cleaned_evidence = [str(raw_evidence)]
+    result = verifier.verify(req.finding, cleaned_evidence)
     return result
 
 

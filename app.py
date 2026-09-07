@@ -1,16 +1,30 @@
-"""Enterprise Auditor AI - Hugging Face Gradio Application."""
+"""Enterprise Auditor AI - Multi-Platform Interface."""
 
 import os
 import sys
 from pathlib import Path
-import gradio as gr
 
 # Add project root to sys.path
 BASE_DIR = Path(__file__).parent.resolve()
 sys.path.insert(0, str(BASE_DIR))
 
-from auditor_core.retrieval.qa_engine import QAEngine
+# If executed via `streamlit run app.py`, seamlessly execute the full Streamlit dashboard
+try:
+    import streamlit as st
+    if hasattr(st, "runtime") and st.runtime.exists():
+        import runpy
+        runpy.run_path(str(BASE_DIR / "streamlit_app.py"), run_name="__main__")
+        sys.exit(0)
+except ImportError:
+    pass
+
+import gradio as gr
+
+from auditor_core.embeddings.vector_store import VectorStore
 from auditor_core.retrieval.keyword_index import KeywordIndex
+from auditor_core.retrieval.hybrid import HybridRetriever
+from auditor_core.retrieval.reranker import Reranker
+from auditor_core.retrieval.qa_engine import QAEngine
 from auditor_core.models.clause_extractor import ClauseExtractor
 from auditor_core.models.clause_analyzer import ClauseAnalyzer
 from auditor_core.models.risk_detector import RiskDetector
@@ -28,17 +42,22 @@ from auditor_core.ingestion.ingest_single import ingest_single_pdf
 
 # Initialize engines
 print("Initializing Enterprise Auditor Engines...")
-qa_engine = QAEngine()
+store = VectorStore()
 keyword_idx = KeywordIndex()
-clause_ext = ClauseExtractor()
+keyword_idx.build_from_store(store)
+retriever = HybridRetriever(store, keyword_idx)
+reranker = Reranker()
+
+qa_engine = QAEngine(retriever, reranker)
+clause_ext = ClauseExtractor(retriever, reranker)
 clause_ana = ClauseAnalyzer()
-risk_det = RiskDetector()
-missing_det = MissingClauseDetector()
-comparator = ClauseComparator()
+risk_det = RiskDetector(retriever, reranker)
+missing_det = MissingClauseDetector(retriever, reranker)
+comparator = ClauseComparator(retriever, reranker)
 verifier = Verifier()
 kg = KnowledgeGraph()
-report_gen = ReportGenerator()
-obligation_ext = ObligationExtractor()
+report_gen = ReportGenerator(qa_engine, clause_ext, clause_ana, risk_det, missing_det)
+obligation_ext = ObligationExtractor(qa_engine)
 vlm = VLMAnalyzer()
 
 # Discover available contracts

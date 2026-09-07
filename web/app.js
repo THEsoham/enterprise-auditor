@@ -17,9 +17,12 @@ const elements = {
   navItems: document.querySelectorAll('.nav-item'),
   tabPanes: document.querySelectorAll('.tab-pane'),
   docSearchInput: document.getElementById('doc-search-input'),
+  docSearchClear: document.getElementById('doc-search-clear'),
   docSelect: document.getElementById('doc-select'),
+  customDocList: document.getElementById('custom-doc-list'),
   docCounter: document.getElementById('doc-counter'),
   activeContractDisplay: document.getElementById('selected-doc-name'),
+  headerScopeTitle: document.getElementById('header-scope-title'),
   copilotScopeBadge: document.getElementById('copilot-scope-badge'),
   copilotHistory: document.getElementById('copilot-history'),
   copilotInput: document.getElementById('copilot-input'),
@@ -202,27 +205,138 @@ async function loadDocuments() {
   }
 }
 
-function renderDocumentOptions() {
-  const currentVal = elements.docSelect.value;
-  elements.docSelect.innerHTML = '<option value="">-- All Contracts (Cross-Document Mode) --</option>';
+function selectContract(name) {
+  state.selectedDocument = name || null;
+  if (elements.docSelect) {
+    elements.docSelect.value = name || '';
+  }
 
+  // Update active state in custom list
+  if (elements.customDocList) {
+    const items = elements.customDocList.querySelectorAll('.doc-item');
+    items.forEach(it => {
+      if (!name) {
+        it.classList.toggle('active', it.dataset.doc === '');
+        it.setAttribute('aria-selected', it.dataset.doc === '' ? 'true' : 'false');
+      } else {
+        const match = it.dataset.doc === name;
+        it.classList.toggle('active', match);
+        it.setAttribute('aria-selected', match ? 'true' : 'false');
+      }
+    });
+  }
+
+  // Dispatch change on select so all existing listeners fire
+  if (elements.docSelect) {
+    elements.docSelect.dispatchEvent(new Event('change'));
+  }
+}
+
+function renderDocumentOptions() {
+  const currentVal = state.selectedDocument || elements.docSelect.value || '';
+
+  // 1. Keep hidden native <select> synchronized
+  elements.docSelect.innerHTML = '<option value="">-- All Contracts (Cross-Document Mode) --</option>';
   state.filteredDocuments.forEach(doc => {
     const opt = document.createElement('option');
     opt.value = doc.name;
     opt.textContent = doc.name;
     elements.docSelect.appendChild(opt);
   });
+  elements.docSelect.value = currentVal;
 
-  elements.docSelect.value = currentVal || '';
+  // 2. Render Custom Rich Document Explorer
+  if (!elements.customDocList) return;
+  elements.customDocList.innerHTML = '';
+
+  // Pinned Global Item (All Contracts)
+  const isGlobalActive = !currentVal;
+  const allItem = document.createElement('div');
+  allItem.className = `doc-item doc-item-global ${isGlobalActive ? 'active' : ''}`;
+  allItem.dataset.doc = '';
+  allItem.setAttribute('role', 'option');
+  allItem.setAttribute('aria-selected', isGlobalActive ? 'true' : 'false');
+  allItem.innerHTML = `
+    <div class="doc-item-icon global-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="2" y1="12" x2="22" y2="12"></line>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+      </svg>
+    </div>
+    <div class="doc-item-content">
+      <div class="doc-item-title">All Contracts (Cross-Document)</div>
+      <div class="doc-item-sub">Cross-corpus hybrid vector & BM25 search</div>
+    </div>
+    <span class="doc-badge-cat global-badge">Corpus</span>
+  `;
+  allItem.addEventListener('click', () => selectContract(''));
+  elements.customDocList.appendChild(allItem);
+
+  // Render search results or full list
+  if (state.filteredDocuments.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'doc-item-empty';
+    empty.textContent = `No contracts match "${elements.docSearchInput.value}"`;
+    elements.customDocList.appendChild(empty);
+    return;
+  }
+
+  state.filteredDocuments.forEach(doc => {
+    const isSelected = currentVal === doc.name;
+    const item = document.createElement('div');
+    item.className = `doc-item ${isSelected ? 'active' : ''}`;
+    item.dataset.doc = doc.name;
+    item.title = doc.name;
+    item.setAttribute('role', 'option');
+    item.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+
+    const cleanTitle = doc.name.replace(/\.pdf$/i, '');
+    const category = doc.category || 'General';
+
+    item.innerHTML = `
+      <div class="doc-item-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+      </div>
+      <div class="doc-item-content">
+        <div class="doc-item-title">${escapeHtml(cleanTitle)}</div>
+        <div class="doc-item-sub">${escapeHtml(category)} Agreement</div>
+      </div>
+      <span class="doc-badge-cat">${escapeHtml(category.substring(0, 10))}</span>
+    `;
+
+    item.addEventListener('click', () => selectContract(doc.name));
+    elements.customDocList.appendChild(item);
+  });
 }
 
 function setupDocumentPicker() {
+  if (elements.docSearchClear) {
+    elements.docSearchClear.addEventListener('click', () => {
+      elements.docSearchInput.value = '';
+      elements.docSearchClear.style.display = 'none';
+      state.filteredDocuments = state.documents;
+      renderDocumentOptions();
+      elements.docSearchInput.focus();
+    });
+  }
+
   elements.docSearchInput.addEventListener('input', (e) => {
     const q = e.target.value.toLowerCase().trim();
+    if (elements.docSearchClear) {
+      elements.docSearchClear.style.display = q ? 'block' : 'none';
+    }
     if (!q) {
       state.filteredDocuments = state.documents;
     } else {
-      state.filteredDocuments = state.documents.filter(d => d.name.toLowerCase().includes(q));
+      state.filteredDocuments = state.documents.filter(d => 
+        d.name.toLowerCase().includes(q) || (d.category && d.category.toLowerCase().includes(q))
+      );
     }
     renderDocumentOptions();
   });
@@ -231,13 +345,35 @@ function setupDocumentPicker() {
     const val = e.target.value;
     state.selectedDocument = val || null;
     
+    // Synchronize custom list active class
+    if (elements.customDocList) {
+      const items = elements.customDocList.querySelectorAll('.doc-item');
+      items.forEach(it => {
+        if (!val) {
+          it.classList.toggle('active', it.dataset.doc === '');
+          it.setAttribute('aria-selected', it.dataset.doc === '' ? 'true' : 'false');
+        } else {
+          const match = it.dataset.doc === val;
+          it.classList.toggle('active', match);
+          it.setAttribute('aria-selected', match ? 'true' : 'false');
+        }
+      });
+    }
+
     if (val) {
-      elements.activeContractDisplay.textContent = val;
-      elements.copilotScopeBadge.textContent = `Document: ${val.substring(0, 30)}...`;
-      showToast(`Active Scope: ${val.substring(0, 35)}...`, 'info');
+      const cleanName = val.replace(/\.pdf$/i, '');
+      elements.activeContractDisplay.textContent = cleanName;
+      elements.copilotScopeBadge.textContent = `Document: ${cleanName.substring(0, 30)}...`;
+      if (elements.headerScopeTitle) {
+        elements.headerScopeTitle.textContent = `${cleanName} (Single Contract Focus)`;
+      }
+      showToast(`Active Scope: ${cleanName.substring(0, 35)}...`, 'info');
     } else {
       elements.activeContractDisplay.textContent = 'Cross-Document Search Active';
       elements.copilotScopeBadge.textContent = 'All 257 Contracts';
+      if (elements.headerScopeTitle) {
+        elements.headerScopeTitle.textContent = 'All 257 Agreements (Cross-Document Search)';
+      }
       showToast('Active Scope: Cross-Document Search', 'info');
     }
   });
@@ -285,15 +421,12 @@ function setupDocumentPicker() {
         await loadDocuments();
 
         // Select uploaded document
-        elements.docSelect.value = data.document;
-        state.selectedDocument = data.document;
-        elements.activeContractDisplay.textContent = data.document;
-        elements.copilotScopeBadge.textContent = `Document: ${data.document.substring(0, 30)}...`;
+        selectContract(data.document);
 
       } catch (err) {
         showToast(`Upload Error: ${err.message}`, 'error');
       } finally {
-        uploadText.textContent = '+ Upload New PDF';
+        uploadText.textContent = '+ Ingest Contract PDF';
         btnUpload.disabled = false;
         fileInput.value = '';
       }
@@ -553,13 +686,22 @@ function renderClauseCards(clauses) {
       <div class="clause-card-excerpt">${escapeHtml(excerpt)}</div>
       <div class="clause-card-footer">
         <span class="page-badge">${pagesText}</span>
-        ${cdata.found ? `<button class="btn-analyze-clause" data-type="${clauseType}">Analyze Parameters →</button>` : ''}
+        <div style="display:flex;gap:8px;align-items:center;">
+          ${cdata.found ? `<button class="btn-verify btn-verify-sm" data-type="${clauseType}">🛡️ Verify</button>` : ''}
+          ${cdata.found ? `<button class="btn-analyze-clause" data-type="${clauseType}">Analyze Parameters →</button>` : ''}
+        </div>
       </div>
     `;
 
     if (cdata.found) {
       card.querySelector('.btn-analyze-clause').addEventListener('click', () => {
         analyzeClauseDetail(clauseType);
+      });
+      card.querySelector('.btn-verify').addEventListener('click', () => {
+        runVerifier(
+          `${clauseType.replace(/_/g, ' ')} clause is FOUND in the contract`,
+          cdata.text || excerpt
+        );
       });
     }
 
@@ -678,7 +820,16 @@ function renderRiskFindings(risks) {
       </div>
       <div class="risk-finding-text">${escapeHtml(risk.finding || '')}</div>
       ${risk.evidence ? `<div class="risk-evidence-quote">"${escapeHtml(risk.evidence)}"</div>` : ''}
+      <div class="risk-card-actions">
+        <button class="btn-verify btn-verify-sm" data-risk-idx="${i}">🛡️ Verify with AI</button>
+      </div>
     `;
+    card.querySelector('.btn-verify').addEventListener('click', () => {
+      runVerifier(
+        risk.finding || `${risk.clause} has ${lvl} risk`,
+        risk.evidence || risk.finding || ''
+      );
+    });
     elements.riskFindingsContainer.appendChild(card);
   });
 }
@@ -740,7 +891,16 @@ function renderMissingResult(data) {
     <div class="status-badge-large ${badgeClass}">${badgeText}</div>
     <div class="missing-detail-text">${formatMarkdown(data.detail)}</div>
     ${evidenceHtml}
+    <div style="margin-top:16px;">
+      <button class="btn-verify" id="btn-verify-missing">🛡️ Verify Determination with AI</button>
+    </div>
   `;
+  document.getElementById('btn-verify-missing').addEventListener('click', () => {
+    runVerifier(
+      `${data.clause_type?.replace(/_/g, ' ') || 'Clause'} determination: ${data.status}`,
+      data.detail || ''
+    );
+  });
 }
 
 // -------------------------------------------------------------
@@ -779,7 +939,16 @@ function setupComparator() {
 function renderCompareResult(data) {
   elements.compareResultContainer.innerHTML = `
     <div class="comparison-text-rendered">${formatMarkdown(data.comparison)}</div>
+    <div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--glass-border); display:flex; justify-content:flex-end;">
+      <button class="btn-verify" id="btn-verify-compare">🛡️ Verify Analysis with AI</button>
+    </div>
   `;
+  document.getElementById('btn-verify-compare').addEventListener('click', () => {
+    runVerifier(
+      'Cross-contract comparison analysis',
+      data.comparison || ''
+    );
+  });
 }
 
 // -------------------------------------------------------------
@@ -1098,7 +1267,17 @@ function setupReport() {
         const data = await res.json();
         currentMemoMarkdown = data.markdown_memo;
 
-        container.innerHTML = formatMarkdown(data.markdown_memo);
+        container.innerHTML = formatMarkdown(data.markdown_memo) + `
+          <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--glass-border); display:flex; justify-content:flex-end; gap:10px;">
+            <button class="btn-verify" id="btn-verify-memo">🛡️ Verify Memo with AI</button>
+          </div>
+        `;
+        document.getElementById('btn-verify-memo').addEventListener('click', () => {
+          runVerifier(
+            'Executive Due Diligence Audit Memorandum',
+            currentMemoMarkdown.substring(0, 3000)
+          );
+        });
         if (dlBtn) dlBtn.style.display = 'inline-flex';
         showToast(`Audit memo generated (Score: ${data.compliance_score}/100)!`, 'success');
       } catch (err) {
@@ -1182,6 +1361,7 @@ function renderObligations(data) {
 
   let html = '';
   data.timeline_items.forEach((item) => {
+    const cardIdx = data.timeline_items.indexOf(item);
     html += `
       <div class="timeline-card">
         <div class="timeline-header">
@@ -1189,11 +1369,28 @@ function renderObligations(data) {
           <span class="timeframe-badge">⏱️ ${item.timeframe.toUpperCase()}</span>
         </div>
         <div class="timeline-context">${escapeHtml(item.context)}</div>
+        <div class="timeline-card-actions">
+          <button class="btn-verify btn-verify-sm" data-tl-idx="${cardIdx}">🛡️ Verify</button>
+        </div>
       </div>
     `;
   });
 
   container.innerHTML = html;
+
+  // Bind verify buttons for timeline cards
+  container.querySelectorAll('.btn-verify').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.tlIdx);
+      const item = data.timeline_items[idx];
+      if (item) {
+        runVerifier(
+          `${item.category}: ${item.timeframe}`,
+          item.context || ''
+        );
+      }
+    });
+  });
 }
 
 // -------------------------------------------------------------
@@ -1421,21 +1618,42 @@ async function runVerifier(finding, evidence) {
   elements.verifyModalBody.innerHTML = `
     <div class="loading-spinner-box">
       <div class="spinner"></div>
-      <p>Running independent skeptical verification pass on evidence...</p>
+      <p>Running independent skeptical verification pass with Llama 3.1 8B...</p>
     </div>
   `;
+
+  // Normalize evidence into an array of strings
+  let evidenceList = [];
+  if (Array.isArray(evidence)) {
+    evidenceList = evidence.map(e => {
+      if (typeof e === 'string') return e;
+      if (e && typeof e === 'object') return e.text || e.content || JSON.stringify(e);
+      return String(e);
+    });
+  } else if (typeof evidence === 'string' && evidence.trim().length > 0) {
+    evidenceList = [evidence.trim()];
+  } else if (evidence) {
+    evidenceList = [String(evidence)];
+  }
 
   try {
     const res = await fetch('/api/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        finding: finding,
-        evidence: evidence
+        finding: typeof finding === 'string' ? finding : JSON.stringify(finding),
+        evidence: evidenceList
       })
     });
 
-    if (!res.ok) throw new Error('Verification request failed');
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      const detail = errData.detail 
+        ? (typeof errData.detail === 'string' ? errData.detail : JSON.stringify(errData.detail)) 
+        : res.statusText;
+      throw new Error(`(${res.status}) ${detail}`);
+    }
+
     const data = await res.json();
 
     const isSupported = data.verdict === 'SUPPORTED';
@@ -1446,11 +1664,11 @@ async function runVerifier(finding, evidence) {
         VERDICT: ${data.verdict}
       </div>
       <div style="font-size: 13.5px; line-height: 1.7; color: var(--text-main); white-space: pre-wrap;">
-        ${formatMarkdown(data.reasoning)}
+        ${formatMarkdown(data.reasoning || '')}
       </div>
     `;
   } catch (err) {
-    elements.verifyModalBody.innerHTML = `<p style="color: var(--accent-rose)">Verification failed: ${err.message}</p>`;
+    elements.verifyModalBody.innerHTML = `<p style="color: var(--accent-rose)">Verification failed: ${escapeHtml(err.message)}</p>`;
   }
 }
 

@@ -34,3 +34,8 @@ Thumbs.db
 # Cloned Sub-repositories
 enterprise-auditor/
 
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.tmp/
+

@@ -3,49 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Enterprise Auditor AI • Next-Gen Legal Intelligence</title>
-  <meta name="description" content="AI-Powered Contract Auditing, Clause Extraction, Risk Detection & Multi-Agreement Analytics for 250+ Commercial Agreements.">
+  <title>Enterprise Auditor • Legal Intelligence & Due Diligence</title>
+  <meta name="description" content="AI-Powered Contract Auditing, Clause Extraction, Adversarial Risk Verification & Multi-Agreement Analytics for 250+ Commercial Agreements.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="dark-theme">
   <div class="app-container">
     
-    <!-- Top Global Header -->
+    <!-- Top Global Header (Executive Legal Bar) -->
     <header class="app-header">
       <div class="brand-group">
-        <div class="brand-logo-glow">
-          <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+        <div class="brand-logo-mark">
+          <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
           </svg>
         </div>
         <div class="brand-text">
-          <div class="brand-title">ENTERPRISE AUDITOR <span class="badge-pro">AI CORE</span></div>
-          <div class="brand-subtitle">Autonomous Legal Intelligence & CUAD Contract Analysis</div>
+          <div class="brand-title">ENTERPRISE AUDITOR <span class="badge-version">v2.4 Enterprise</span></div>
+          <div class="brand-subtitle">Commercial Contract Intelligence & Adversarial Due Diligence</div>
         </div>
       </div>
 
-      <div class="header-metrics">
-        <div class="metric-pill">
-          <span class="status-indicator pulse-green"></span>
-          <span class="metric-label">VECTORS</span>
-          <span class="metric-val" id="metric-vectors">14,820</span>
+      <!-- Center: Active Scope Capsule -->
+      <div class="header-scope-capsule" id="header-scope-container">
+        <div class="scope-pulse-indicator"></div>
+        <span class="scope-label">SCOPE</span>
+        <span class="scope-value" id="header-scope-title">All 257 Agreements (Cross-Document Search)</span>
+      </div>
+
+      <!-- Right: Unified System Telemetry & Mode Controls -->
+      <div class="header-right-controls">
+        <div class="telemetry-bar">
+          <div class="telemetry-item" title="Engine Status">
+            <span class="telemetry-dot online"></span>
+            <span class="telemetry-text">Live</span>
+          </div>
+          <div class="telemetry-divider"></div>
+          <div class="telemetry-item" title="Dual LLM Architecture">
+            <span class="telemetry-label">AI</span>
+            <span class="telemetry-text">Qwen 3.5 4B <span class="telemetry-sub">Gen</span> · Llama 3.1 8B <span class="telemetry-sub">Verify</span></span>
+          </div>
+          <div class="telemetry-divider"></div>
+          <div class="telemetry-item" title="ChromaDB & BM25 Corpus">
+            <span class="telemetry-label">CORPUS</span>
+            <span class="telemetry-text"><span id="metric-vectors">14,849</span> Chunks · <span id="metric-docs">257</span> Contracts</span>
+          </div>
         </div>
-        <div class="metric-pill">
-          <span class="metric-label">CONTRACTS</span>
-          <span class="metric-val" id="metric-docs">257</span>
-        </div>
-        <div class="metric-pill">
-          <span class="metric-label">LLM ENGINE</span>
-          <span class="metric-val accent">Qwen 3.5 (4B)</span>
-        </div>
-        <div class="metric-pill">
-          <span class="metric-label">VLM</span>
-          <span class="metric-val accent-cyan">MiniCPM-V</span>
-        </div>
+
         <button id="theme-toggle-btn" class="theme-toggle-btn" title="Toggle Clean Light / Dark Theme">
           <span id="theme-icon">☀️</span> <span id="theme-text">Light</span>
         </button>
@@ -61,7 +70,7 @@
         <!-- Global Contract Selector Section -->
         <div class="sidebar-section contract-picker-box">
           <div class="section-label">
-            <span>ACTIVE CONTRACT</span>
+            <span>CONTRACT EXPLORER</span>
             <span class="doc-counter" id="doc-counter">257 loaded</span>
           </div>
           
@@ -70,17 +79,22 @@
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" id="doc-search-input" placeholder="Search 257 contracts..." autocomplete="off">
+            <input type="text" id="doc-search-input" placeholder="Search 257 commercial contracts..." autocomplete="off">
+            <button id="doc-search-clear" class="search-clear-btn" style="display: none;" title="Clear search">&times;</button>
           </div>
 
-          <div class="dropdown-container">
-            <select id="doc-select" class="custom-select" size="6">
-              <option value="">-- All Contracts (Cross-Document Mode) --</option>
-            </select>
+          <!-- Hidden native select for 100% JS & downstream API backward compatibility -->
+          <select id="doc-select" style="display: none;">
+            <option value="">-- All Contracts (Cross-Document Mode) --</option>
+          </select>
+
+          <!-- Custom Rich Contract Explorer List -->
+          <div class="doc-list-container" id="custom-doc-list" role="listbox" tabindex="0">
+            <!-- Dynamically populated by renderDocumentOptions() in app.js -->
           </div>
 
           <div class="active-contract-badge" id="active-contract-display">
-            <span class="badge-icon">📄</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="badge-icon-svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
             <span class="badge-name" id="selected-doc-name">Cross-Document Search Active</span>
           </div>
 
@@ -93,74 +107,84 @@
                 <polyline points="17 8 12 3 7 8"></polyline>
                 <line x1="12" y1="3" x2="12" y2="15"></line>
               </svg>
-              <span id="upload-btn-text">+ Upload New PDF</span>
+              <span id="upload-btn-text">+ Ingest Contract PDF</span>
             </button>
           </div>
         </div>
 
-        <!-- Main Nav Items -->
+        <!-- Categorized Navigation Menu -->
         <nav class="sidebar-nav">
-          <div class="nav-heading">AUDIT CAPABILITIES</div>
+          <div class="nav-group">
+            <div class="nav-heading">CORE AUDIT</div>
 
-          <button class="nav-item active" data-tab="tab-copilot">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-            <span>Contract Copilot</span>
-            <span class="nav-pill">Q&A</span>
-          </button>
+            <button class="nav-item active" data-tab="tab-copilot">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+              <span>Contract Copilot</span>
+              <span class="nav-pill">Q&A</span>
+            </button>
 
-          <button class="nav-item" data-tab="tab-clauses">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-            <span>Clause Studio</span>
-            <span class="nav-pill">9 Clauses</span>
-          </button>
+            <button class="nav-item" data-tab="tab-clauses">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              <span>Clause Studio</span>
+              <span class="nav-pill">9 Clauses</span>
+            </button>
 
-          <button class="nav-item" data-tab="tab-risks">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-            <span>Risk & Compliance</span>
-            <span class="nav-pill alert">Audit</span>
-          </button>
+            <button class="nav-item" data-tab="tab-risks">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              <span>Risk & Compliance</span>
+              <span class="nav-pill alert">Audit</span>
+            </button>
 
-          <button class="nav-item" data-tab="tab-missing">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-            <span>Missing Clauses</span>
-            <span class="nav-pill">Check</span>
-          </button>
+            <button class="nav-item" data-tab="tab-missing">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <span>Missing Clauses</span>
+              <span class="nav-pill">Check</span>
+            </button>
+          </div>
 
-          <button class="nav-item" data-tab="tab-comparator">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="3" x2="12" y2="21"></line></svg>
-            <span>Cross-Contract Matrix</span>
-            <span class="nav-pill">Compare</span>
-          </button>
+          <div class="nav-group">
+            <div class="nav-heading">MULTI-CONTRACT INTELLIGENCE</div>
 
-          <button class="nav-item" data-tab="tab-graph">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-            <span>Knowledge Graph</span>
-            <span class="nav-pill">Network</span>
-          </button>
+            <button class="nav-item" data-tab="tab-comparator">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="3" x2="12" y2="21"></line></svg>
+              <span>Cross-Contract Matrix</span>
+              <span class="nav-pill">Compare</span>
+            </button>
 
-          <button class="nav-item" data-tab="tab-report">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-            <span>Audit Memorandum</span>
-            <span class="nav-pill">Due Diligence</span>
-          </button>
+            <button class="nav-item" data-tab="tab-graph">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+              <span>Knowledge Graph</span>
+              <span class="nav-pill">Network</span>
+            </button>
 
-          <button class="nav-item" data-tab="tab-obligations">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-            <span>Obligations Timeline</span>
-            <span class="nav-pill">Deadlines</span>
-          </button>
+            <button class="nav-item" data-tab="tab-obligations">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span>Obligations Timeline</span>
+              <span class="nav-pill">Deadlines</span>
+            </button>
 
-          <button class="nav-item" data-tab="tab-tables-images">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-            <span>Tables & Visual Assets</span>
-            <span class="nav-pill cyan">VLM</span>
-          </button>
+            <button class="nav-item" data-tab="tab-tables-images">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+              <span>Tables & Visual Assets</span>
+              <span class="nav-pill cyan">VLM</span>
+            </button>
+          </div>
 
-          <button class="nav-item" data-tab="tab-eval">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-            <span>Evaluation & Benchmarks</span>
-            <span class="nav-pill">CUAD</span>
-          </button>
+          <div class="nav-group">
+            <div class="nav-heading">EXECUTIVE & QUALITY</div>
+
+            <button class="nav-item" data-tab="tab-report">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+              <span>Audit Memorandum</span>
+              <span class="nav-pill">Memo</span>
+            </button>
+
+            <button class="nav-item" data-tab="tab-eval">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+              <span>Evaluation Suite</span>
+              <span class="nav-pill">CUAD</span>
+            </button>
+          </div>
         </nav>
 
         <div class="sidebar-footer">

@@ -6,7 +6,7 @@ import ollama
 class Verifier:
     """Verifies that findings are supported by evidence."""
 
-    def __init__(self, model="qwen3.5:4b"):
+    def __init__(self, model="llama3.1:8b"):
         self.model = model
 
     def verify(self, finding, evidence):
@@ -19,6 +19,11 @@ class Verifier:
         Returns:
             Dict with verdict and reasoning.
         """
+
+        if isinstance(evidence, str):
+            evidence = [evidence] if evidence.strip() else []
+        elif not isinstance(evidence, list):
+            evidence = [str(evidence)] if evidence else []
 
         evidence_text = "\n\n".join(
             f"EVIDENCE {i}:\n{e}"
@@ -87,5 +92,7 @@ VERDICT:
                 "SUPPORTED" if supported
                 else "UNSUPPORTED"
             ),
+            "supported": supported,
+            "confidence": "HIGH" if supported else "LOW",
             "reasoning": answer,
         }
