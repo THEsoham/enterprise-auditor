@@ -11,9 +11,7 @@ import {
   Sliders,
   X,
   Sparkles,
-  Loader2,
-  Info,
-  Layers
+  Loader2
 } from 'lucide-react';
 
 const CLAUSE_DISPLAY_NAMES: Record<string, string> = {

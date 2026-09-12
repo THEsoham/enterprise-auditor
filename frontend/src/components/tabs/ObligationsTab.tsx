@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAudit } from '../../context/AuditContext';
 import { api } from '../../api/client';
-import type { ObligationsResponse, ObligationItem } from '../../types';
+import type { ObligationsResponse } from '../../types';
 import {
   Clock,
   Calendar,
@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export const ObligationsTab: React.FC = () => {
-  const { selectedDocument, openVerifier, openEvidenceModal, showToast } = useAudit();
+  const { selectedDocument, openVerifier, showToast } = useAudit();
 
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<ObligationsResponse | null>(null);

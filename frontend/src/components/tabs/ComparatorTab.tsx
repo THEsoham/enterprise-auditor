@@ -6,8 +6,6 @@ import {
   GitCompare,
   Sparkles,
   ShieldCheck,
-  CheckCircle2,
-  XCircle,
   Loader2,
   ChevronRight
 } from 'lucide-react';

@@ -9,7 +9,7 @@ import ollama
 class Reranker:
     """Uses Qwen to score and rerank retrieval candidates."""
 
-    def __init__(self, model="qwen3.5:4b"):
+    def __init__(self, model="qwen2.5:latest"):
         self.model = model
 
     def rerank(self, query, candidates, top_k=5):

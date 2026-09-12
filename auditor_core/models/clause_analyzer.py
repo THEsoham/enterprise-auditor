@@ -9,7 +9,7 @@ import ollama
 class ClauseAnalyzer:
     """Produces structured fields from raw clause text."""
 
-    def __init__(self, model="qwen3.5:4b"):
+    def __init__(self, model="qwen2.5:latest"):
         self.model = model
 
     def analyze(self, clause_data):

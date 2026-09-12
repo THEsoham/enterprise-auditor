@@ -431,6 +431,30 @@ async def run_evaluation():
     return summary
 
 
+# --- Backward compatibility wrappers for cached frontend clients ---
+@app.post("/api/risks")
+async def assess_risk_fallback(req: RiskRequest):
+    return await assess_risk(req)
+
+@app.post("/api/missing-clause")
+async def check_missing_clause_fallback(req: MissingRequest):
+    return await check_missing_clause(req)
+
+@app.post("/api/knowledge-graph")
+async def generate_graph_fallback(req: GraphRequest):
+    return await generate_graph(req)
+
+@app.get("/api/report")
+async def generate_report_get(document: str):
+    res = report_generator.generate_memo(document)
+    return res
+
+@app.get("/api/obligations")
+async def extract_obligations_get(document: str):
+    res = obligation_extractor.extract_obligations(document)
+    return res
+# -------------------------------------------------------------------
+
 # Mount data and static assets directory
 data_dir = Path("data")
 data_dir.mkdir(exist_ok=True)

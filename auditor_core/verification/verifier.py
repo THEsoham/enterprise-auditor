@@ -6,7 +6,7 @@ import ollama
 class Verifier:
     """Verifies that findings are supported by evidence."""
 
-    def __init__(self, model="llama3.1:8b"):
+    def __init__(self, model="llama3.1:latest"):
         self.model = model
 
     def verify(self, finding, evidence):

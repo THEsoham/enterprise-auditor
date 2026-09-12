@@ -159,7 +159,7 @@ export const AuditMemoTab: React.FC = () => {
             <div>
               <div className="text-xs font-bold text-slate-800 mb-0.5">Independent Verification Available</div>
               <p className="text-xs text-slate-500">
-                Run an adversarial check with Llama 3.1 8B across all synthesized clauses and risk assessments in this memorandum.
+                Run an adversarial check with Llama 3.1 across all synthesized clauses and risk assessments in this memorandum.
               </p>
             </div>
             <button

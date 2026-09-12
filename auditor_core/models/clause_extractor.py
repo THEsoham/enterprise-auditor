@@ -20,7 +20,7 @@ class ClauseExtractor:
     """Extracts standard clauses from contracts."""
 
     def __init__(
-        self, retriever, reranker, model="qwen3.5:4b"
+        self, retriever, reranker, model="qwen2.5:latest"
     ):
         self.retriever = retriever
         self.reranker = reranker

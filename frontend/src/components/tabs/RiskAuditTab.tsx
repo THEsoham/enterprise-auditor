@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAudit } from '../../context/AuditContext';
 import { api } from '../../api/client';
-import type { RiskResponse, RiskFinding } from '../../types';
+import type { RiskResponse } from '../../types';
 import {
   AlertTriangle,
   ShieldAlert,

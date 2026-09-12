@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAudit } from '../../context/AuditContext';
 import { api } from '../../api/client';
-import type { MissingClauseResponse, CitedSource } from '../../types';
+import type { MissingClauseResponse } from '../../types';
 import {
-  HelpCircle,
-  ShieldAlert,
   ShieldCheck,
   CheckCircle2,
-  XCircle,
   FileQuestion,
   Search,
   Loader2,
@@ -30,7 +27,7 @@ const DEFAULT_CLAUSE_TYPES = [
 ];
 
 export const MissingClauseTab: React.FC = () => {
-  const { selectedDocument, openVerifier, openEvidenceModal, showToast } = useAudit();
+  const { selectedDocument, openVerifier, showToast } = useAudit();
 
   const [clauseTypes, setClauseTypes] = useState<string[]>(DEFAULT_CLAUSE_TYPES);
   const [selectedClause, setSelectedClause] = useState<string>('force_majeure');

@@ -74,7 +74,7 @@ export const KnowledgeGraphTab: React.FC = () => {
     }
   };
 
-  const generateSyntheticGraph = (docName: string, summary: string) => {
+  const generateSyntheticGraph = (docName: string, _summary: string) => {
     const w = 800;
     const h = 500;
     const center = { x: w / 2, y: h / 2 };

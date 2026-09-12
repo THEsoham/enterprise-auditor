@@ -37,7 +37,16 @@ export const Sidebar: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const navGroups = [
+  interface NavItem {
+    id: string;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    badge: string;
+    alert?: boolean;
+    cyan?: boolean;
+  }
+
+  const navGroups: { label: string; items: NavItem[] }[] = [
     {
       label: 'AUDIT & ANALYSIS',
       items: [

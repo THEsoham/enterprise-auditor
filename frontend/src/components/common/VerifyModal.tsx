@@ -20,7 +20,7 @@ export const VerifyModal: React.FC = () => {
             <div>
               <h3 className="text-sm font-bold text-slate-900">AI Skeptical Verifier</h3>
               <p className="text-[11px] text-slate-500 font-medium">
-                Adversarial scrutiny powered by <strong className="text-emerald-700">Llama 3.1 (8B)</strong>
+                Adversarial scrutiny powered by <strong className="text-emerald-700">Llama 3.1</strong>
               </p>
             </div>
           </div>
@@ -46,7 +46,7 @@ export const VerifyModal: React.FC = () => {
             <div className="py-12 flex flex-col items-center justify-center gap-3 text-center">
               <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
               <p className="text-slate-600 font-medium text-xs">
-                Querying Llama 3.1 8B adversarial verifier across citations...
+                Querying Llama 3.1 adversarial verifier across citations...
               </p>
             </div>
           )}
@@ -110,7 +110,7 @@ export const VerifyModal: React.FC = () => {
 
         {/* Footer */}
         <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between bg-slate-50/70 text-[11px] text-slate-400">
-          <span>Model: Llama 3.1 8B Instruct</span>
+          <span>Model: Llama 3.1 Instruct</span>
           <button
             onClick={closeVerifier}
             className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold hover:bg-slate-100 transition-colors cursor-pointer shadow-2xs"

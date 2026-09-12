@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, Sun, Moon, Database, Cpu, Activity, FileText, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Sun, Moon, Database, Cpu, CheckCircle2 } from 'lucide-react';
 import { useAudit } from '../../context/AuditContext';
 
 export const Header: React.FC = () => {
@@ -69,8 +69,8 @@ export const Header: React.FC = () => {
           <div className="flex items-center gap-1.5 text-slate-600" title="Dual LLM Architecture">
             <Cpu className="w-3.5 h-3.5 text-blue-600" />
             <span className="text-[11px]">
-              <strong className="text-slate-800 font-medium">Qwen 4B</strong> Gen ·{' '}
-              <strong className="text-slate-800 font-medium">Llama 8B</strong> Verify
+              <strong className="text-slate-800 font-medium">Qwen 2.5</strong> Gen ·{' '}
+              <strong className="text-slate-800 font-medium">Llama 3.1</strong> Verify
             </span>
           </div>
 

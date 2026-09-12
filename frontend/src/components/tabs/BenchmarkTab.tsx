@@ -111,7 +111,7 @@ export const BenchmarkTab: React.FC = () => {
       {loading ? (
         <div className="p-20 text-center bg-white border border-slate-200 rounded-xl shadow-xs">
           <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-3" />
-          <p className="text-sm font-semibold text-slate-800">Running CUAD test suite through Qwen 2.5 4B & Vector Store...</p>
+          <p className="text-sm font-semibold text-slate-800">Running CUAD test suite through Qwen 2.5 & Vector Store...</p>
           <p className="text-xs text-slate-500 mt-1">Executing multi-hop retrieval queries and measuring legal ground-truth overlap</p>
         </div>
       ) : evalData ? (

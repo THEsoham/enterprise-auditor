@@ -5,7 +5,7 @@ import ollama
 class QAEngine:
     """Retrieval-augmented Q&A over contract documents."""
 
-    def __init__(self, retriever, reranker, model="qwen3.5:4b"):
+    def __init__(self, retriever, reranker, model="qwen2.5:latest"):
         self.retriever = retriever
         self.reranker = reranker
         self.model = model

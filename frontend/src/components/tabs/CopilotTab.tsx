@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, Scale, ShieldCheck, Sparkles, BookOpen, Clock, Zap, MessageSquare } from 'lucide-react';
+import { Send, Scale, ShieldCheck, Sparkles, BookOpen, MessageSquare } from 'lucide-react';
 import { useAudit } from '../../context/AuditContext';
 import { api } from '../../api/client';
 import type { AskResponse } from '../../types';

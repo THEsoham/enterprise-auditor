@@ -69,13 +69,13 @@ export const api = {
     }),
 
   detectRisks: (document: string) =>
-    fetchJson<RiskResponse>(`${BASE_URL}/risks`, {
+    fetchJson<RiskResponse>(`${BASE_URL}/risk`, {
       method: 'POST',
       body: JSON.stringify({ document }),
     }),
 
   checkMissingClause: (document: string, clause_type: string) =>
-    fetchJson<MissingClauseResponse>(`${BASE_URL}/missing-clause`, {
+    fetchJson<MissingClauseResponse>(`${BASE_URL}/missing`, {
       method: 'POST',
       body: JSON.stringify({ document, clause_type }),
     }),
@@ -94,7 +94,7 @@ export const api = {
 
   getKnowledgeGraph: (document: string) =>
     fetchJson<{ document: string; graph_summary: string; graph_data?: any }>(
-      `${BASE_URL}/knowledge-graph`,
+      `${BASE_URL}/graph`,
       {
         method: 'POST',
         body: JSON.stringify({ document }),
@@ -102,10 +102,16 @@ export const api = {
     ),
 
   extractObligations: (document: string) =>
-    fetchJson<ObligationsResponse>(`${BASE_URL}/obligations?document=${encodeURIComponent(document)}`),
+    fetchJson<ObligationsResponse>(`${BASE_URL}/obligations`, {
+      method: 'POST',
+      body: JSON.stringify({ document }),
+    }),
 
   generateReport: (document: string) =>
-    fetchJson<ReportResponse>(`${BASE_URL}/report?document=${encodeURIComponent(document)}`),
+    fetchJson<ReportResponse>(`${BASE_URL}/report`, {
+      method: 'POST',
+      body: JSON.stringify({ document }),
+    }),
 
   getTables: (document: string) =>
     fetchJson<{ document: string; tables: TableItem[]; count: number }>(
