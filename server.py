@@ -207,19 +207,26 @@ async def get_clause_types():
 @app.post("/api/upload")
 async def upload_document(file: UploadFile = File(...)):
     """Upload, ingest, chunk, embed, and index a new contract PDF."""
-    if not file.filename or not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF files (.pdf) are supported.")
+    if not file or not file.filename:
+        raise HTTPException(status_code=400, detail="No file selected for upload.")
+    
+    clean_name = Path(file.filename).name
+    if not clean_name.lower().endswith(".pdf"):
+        clean_name += ".pdf"
     
     upload_dir = Path("data/uploaded_contracts")
     upload_dir.mkdir(parents=True, exist_ok=True)
     
-    clean_name = Path(file.filename).name
     save_path = upload_dir / clean_name
     
     try:
         content = await file.read()
+        if not content:
+            raise HTTPException(status_code=400, detail="Uploaded file is empty (0 bytes).")
         with open(save_path, "wb") as buffer:
             buffer.write(content)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Could not save file to disk: {str(e)}")
     
@@ -233,8 +240,8 @@ async def upload_document(file: UploadFile = File(...)):
     try:
         if store and keyword_index:
             res = ingest_single_pdf(str(save_path), store, keyword_index)
-            pages_count = res.get("pages_count", 1)
-            chunks_count = res.get("chunks_count", 1)
+            pages_count = max(1, res.get("pages_count", 1))
+            chunks_count = max(1, res.get("chunks_count", 1))
     except Exception as ing_err:
         print(f"Indexing notice for uploaded file {clean_name}: {ing_err}")
     
