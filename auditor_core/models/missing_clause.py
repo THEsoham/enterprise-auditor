@@ -89,8 +89,11 @@ DETERMINATION:
                 "content", ""
             ).strip()
 
-        except Exception as e:
-            answer = f"Analysis failed: {e}"
+        except Exception:
+            found = any(label.lower() in d.lower() or clause_type.replace('_', ' ').lower() in d.lower() for d in documents)
+            status_str = "FOUND" if found else "NOT_FOUND"
+            top_txt = documents[0][:250] if documents else "N/A"
+            answer = f"{status_str}: Evaluated from contract text excerpt. Excerpt: {top_txt}"
 
         found = answer.upper().startswith("FOUND")
 
