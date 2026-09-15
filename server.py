@@ -478,6 +478,32 @@ async def export_pdf_report(document: Optional[str] = None):
     comp_score = eas_data.get("composite_score", 88.5)
     grade = eas_data.get("grade", "A")
     metrics = eas_data.get("metrics", {})
+
+    metrics_rows = []
+    for k, v in metrics.items():
+        m_name = k.replace('_', ' ').title()
+        m_score = v.get('score', 0)
+        status_badge = '<span style="color:#059669; font-weight:700;">PASSED</span>' if m_score >= 60 else '<span style="color:#dc2626; font-weight:700;">REVIEW</span>'
+        metrics_rows.append(f"<tr><td><strong>{m_name}</strong></td><td>{m_score:.1f}%</td><td>{status_badge}</td></tr>")
+    metrics_html = "".join(metrics_rows)
+
+    risk_rows = []
+    for r in risks[:6]:
+        c_type = (r.get('clause_type') or 'Contract Clause').replace('_', ' ').title()
+        r_level = r.get('risk_level', 'MEDIUM')
+        r_class = 'risk-high' if str(r_level).upper() == 'HIGH' else 'risk-med'
+        r_finding = r.get('finding', 'Review required')
+        risk_rows.append(f"<tr><td><strong>{c_type}</strong></td><td class='{r_class}'>{r_level}</td><td>{r_finding}</td></tr>")
+    risks_html = "".join(risk_rows)
+
+    clause_rows = []
+    for ctype, info in list(clauses.items())[:8]:
+        c_name = ctype.replace('_', ' ').title()
+        found = info.get('found')
+        status_span = '<span style="color:#059669; font-weight:700;">FOUND</span>' if found else '<span style="color:#dc2626;">MISSING</span>'
+        excerpt = (info.get('text') or 'N/A')[:130]
+        clause_rows.append(f"<tr><td><strong>{c_name}</strong></td><td>{status_span}</td><td>{excerpt}...</td></tr>")
+    clauses_html = "".join(clause_rows)
     
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
@@ -540,7 +566,7 @@ async def export_pdf_report(document: Optional[str] = None):
             </tr>
         </thead>
         <tbody>
-            {"".join(f"<tr><td><strong>{k.replace('_', ' ').title()}</strong></td><td>{v.get('score', 0):.1f}%</td><td>{'<span style=\"color:#059669; font-weight:700;\">PASSED</span>' if v.get('score', 0) >= 60 else '<span style=\"color:#dc2626; font-weight:700;\">REVIEW</span>'}</td></tr>" for k, v in metrics.items())}
+            {metrics_html}
         </tbody>
     </table>
 
@@ -554,7 +580,7 @@ async def export_pdf_report(document: Optional[str] = None):
             </tr>
         </thead>
         <tbody>
-            {"".join(f"<tr><td><strong>{(r.get('clause_type') or 'Contract Clause').replace('_', ' ').title()}</strong></td><td class='{('risk-high' if (r.get('risk_level') or '').upper()=='HIGH' else 'risk-med')}'>{r.get('risk_level', 'MEDIUM')}</td><td>{r.get('finding', 'Review required')}</td></tr>" for r in risks[:6])}
+            {risks_html}
         </tbody>
     </table>
 
@@ -568,7 +594,7 @@ async def export_pdf_report(document: Optional[str] = None):
             </tr>
         </thead>
         <tbody>
-            {"".join(f"<tr><td><strong>{ctype.replace('_', ' ').title()}</strong></td><td>{'<span style=\"color:#059669; font-weight:700;\">FOUND</span>' if info.get('found') else '<span style=\"color:#dc2626;\">MISSING</span>'}</td><td>{(info.get('text') or 'N/A')[:130]}...</td></tr>" for ctype, info in list(clauses.items())[:8])}
+            {clauses_html}
         </tbody>
     </table>
 
