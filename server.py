@@ -207,8 +207,9 @@ async def upload_document(file: UploadFile = File(...)):
     save_path = upload_dir / clean_name
     
     try:
+        content = await file.read()
         with open(save_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+            buffer.write(content)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Could not save file to disk: {str(e)}")
     
