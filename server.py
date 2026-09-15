@@ -81,6 +81,11 @@ def init_engines():
         for p in DATASET_DIR.rglob("*.pdf"):
             pdf_path_map[p.name] = str(p)
 
+    upload_dir = Path("data/uploaded_contracts")
+    if upload_dir.exists():
+        for p in upload_dir.rglob("*.pdf"):
+            pdf_path_map[p.name] = str(p)
+
     store = VectorStore()
     keyword_index = KeywordIndex()
     keyword_index.build_from_store(store)
