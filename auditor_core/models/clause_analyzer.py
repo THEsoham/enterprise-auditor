@@ -3,8 +3,6 @@
 import json
 import re
 
-import ollama
-
 
 class ClauseAnalyzer:
     """Produces structured fields from raw clause text."""

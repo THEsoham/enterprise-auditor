@@ -1,7 +1,5 @@
 """Cross-document clause comparison."""
 
-import ollama
-
 
 class ClauseComparator:
     """Compares provisions across multiple contracts."""

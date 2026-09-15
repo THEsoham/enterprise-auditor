@@ -1,7 +1,5 @@
 """Clause extraction from contract documents."""
 
-import ollama
-
 
 CLAUSE_TYPES = [
     "termination",

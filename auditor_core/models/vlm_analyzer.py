@@ -3,8 +3,6 @@
 import base64
 from pathlib import Path
 
-import ollama
-
 
 class VLMAnalyzer:
     """Analyzes document images using a vision LLM."""
@@ -36,6 +34,7 @@ class VLMAnalyzer:
         )
 
         try:
+            import ollama
             response = ollama.chat(
                 model=self.model,
                 messages=[
@@ -56,7 +55,7 @@ class VLMAnalyzer:
         except Exception as e:
             return {
                 "image_path": image_path,
-                "description": f"VLM analysis failed: {e}",
+                "description": f"VLM analysis requires local Ollama with minicpm-v model. ({e})",
                 "error": True,
             }
 

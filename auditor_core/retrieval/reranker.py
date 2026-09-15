@@ -3,8 +3,6 @@
 import json
 import re
 
-import ollama
-
 
 class Reranker:
     """Uses Qwen to score and rerank retrieval candidates."""

@@ -1,6 +1,5 @@
 from pathlib import Path
 import chromadb
-import ollama
 
 
 class VectorStore:
@@ -39,6 +38,7 @@ class VectorStore:
             texts = [c["text"] for c in batch]
 
             try:
+                import ollama
                 response = ollama.embed(
                     model="nomic-embed-text:latest",
                     input=texts
@@ -108,6 +108,7 @@ class VectorStore:
         """
 
         try:
+            import ollama
             response = ollama.embed(
                 model="nomic-embed-text:latest",
                 input=query

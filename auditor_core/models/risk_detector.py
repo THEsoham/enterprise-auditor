@@ -3,8 +3,6 @@
 import json
 import re
 
-import ollama
-
 
 class RiskDetector:
     """Detects potentially risky provisions in contracts."""
@@ -116,23 +114,8 @@ RISKS (JSON array):
 """
 
         try:
-
-            response = ollama.chat(
-                model=self.model,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ],
-                think=False,
-                options={
-                    "temperature": 0,
-                    "num_predict": 800,
-                },
-            )
-
-            response_text = response["message"].get(
-                "content", ""
-            )
-
+            from auditor_core.llm.cloud_llm import query_llm
+            response_text = query_llm(prompt, ollama_model=self.model, max_tokens=800)
             risks = self._parse_json_array(response_text)
 
         except Exception:

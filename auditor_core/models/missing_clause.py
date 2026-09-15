@@ -1,7 +1,5 @@
 """Missing clause detection in contracts."""
 
-import ollama
-
 
 class MissingClauseDetector:
     """Detects whether clause types are present or absent."""
