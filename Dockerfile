@@ -36,4 +36,4 @@ COPY --from=frontend-build /frontend/dist/ /app/web/
 EXPOSE 8000 8501
 
 # Default command: launch FastAPI web server
-CMD ["python", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "python -m uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}"]

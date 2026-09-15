@@ -2,13 +2,8 @@ services:
   # 1. FastAPI Executive Web Dashboard (Recommended)
   - type: web
     name: enterprise-auditor-api
-    runtime: python
+    runtime: docker
     plan: free
-    buildCommand: cd frontend && npm install && npm run build && cd .. && mkdir -p web && cp -r frontend/dist/* web/ && pip install -r requirements.txt
-    startCommand: python -m uvicorn server:app --host 0.0.0.0 --port $PORT
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
 
   # 2. Streamlit Dashboard Service
   - type: web
