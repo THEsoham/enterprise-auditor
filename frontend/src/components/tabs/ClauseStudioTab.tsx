@@ -252,7 +252,7 @@ export const ClauseStudioTab: React.FC = () => {
                           }
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer"
                         >
-                          <ShieldCheck className="w-3.5 h-3.5" /> Verify with Llama 3.1
+                          <ShieldCheck className="w-3.5 h-3.5" /> Verify with Gemini
                         </button>
 
                         <button
@@ -371,7 +371,7 @@ export const ClauseStudioTab: React.FC = () => {
                   }
                   className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-xs text-emerald-800 font-semibold transition-colors cursor-pointer"
                 >
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" /> Verify Parameters with Llama 3.1
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" /> Verify Parameters with Gemini
                 </button>
               </div>
             ) : (

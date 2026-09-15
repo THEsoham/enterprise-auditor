@@ -274,7 +274,7 @@ export const Sidebar: React.FC = () => {
             </span>
           </div>
           <div className="text-[10.5px] text-slate-500 leading-snug">
-            Nomic Embeddings + BM25Okapi + Qwen Reranker
+            ChromaDB + BM25Okapi + Neural Reranker
           </div>
         </div>
       </div>

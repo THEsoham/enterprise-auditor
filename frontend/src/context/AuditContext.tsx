@@ -54,8 +54,27 @@ export const AuditProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('copilot');
-  const [theme, setTheme] = useState<'dark' | 'light'>('light');
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('ea_theme');
+      if (saved === 'dark' || saved === 'light') return saved;
+    }
+    return 'light';
+  });
   const [toast, setToast] = useState<ToastState | null>(null);
+
+  // Sync theme with HTML class and localStorage
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('ea_theme', theme);
+    }
+  }, [theme]);
 
   const [verifyModal, setVerifyModal] = useState<VerifyModalState>({
     isOpen: false,
@@ -120,15 +139,11 @@ export const AuditProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    const root = document.documentElement;
-    if (newTheme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-    showToast(`Switched to ${newTheme} theme`, 'info');
+    setTheme((prev) => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      showToast(`Switched to ${next} theme`, 'info');
+      return next;
+    });
   };
 
   const openVerifier = async (finding: string, evidence: any) => {

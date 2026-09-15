@@ -170,8 +170,8 @@ async def get_stats():
         "total_documents": len(all_docs),
         "total_vectors": vector_count,
         "models": {
-            "llm_generation": "GPT-4o-mini / Qwen 2.5",
-            "llm_verification": "Gemini 3.6 Flash / Llama 3.1",
+            "llm_generation": "OpenAI GPT-4o-mini",
+            "llm_verification": "Google Gemini 3.6 Flash",
             "embeddings": "ChromaDB / Nomic Embed",
             "vlm": "MiniCPM-V Vision"
         },

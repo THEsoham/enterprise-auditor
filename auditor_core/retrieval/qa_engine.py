@@ -4,7 +4,7 @@ import time
 class QAEngine:
     """Retrieval-augmented Q&A over contract documents."""
 
-    def __init__(self, retriever, reranker, model="qwen2.5:latest"):
+    def __init__(self, retriever, reranker, model="gpt-4o-mini"):
         self.retriever = retriever
         self.reranker = reranker
         self.model = model

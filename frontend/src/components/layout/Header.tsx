@@ -71,11 +71,11 @@ export const Header: React.FC = () => {
 
           <div className="w-[1px] h-3.5 bg-slate-200" />
 
-          <div className="flex items-center gap-1.5 text-slate-600" title="Multi-Tier Dual LLM Architecture">
+          <div className="flex items-center gap-1.5 text-slate-600" title="Dual LLM Architecture: OpenAI + Gemini">
             <Cpu className="w-3.5 h-3.5 text-blue-600" />
             <span className="text-[11px]">
-              <strong className="text-slate-800 font-medium">GPT-4o / Qwen</strong> Gen ·{' '}
-              <strong className="text-slate-800 font-medium">Gemini / Llama</strong> Verify
+              <strong className="text-slate-800 font-medium">GPT-4o-mini</strong> Gen ·{' '}
+              <strong className="text-slate-800 font-medium">Gemini 3.6 Flash</strong> Verify
             </span>
           </div>
 

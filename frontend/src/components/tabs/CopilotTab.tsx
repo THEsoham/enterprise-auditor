@@ -191,7 +191,7 @@ export const CopilotTab: React.FC = () => {
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-700 transition-colors cursor-pointer"
                     >
                       <ShieldCheck className="w-3.5 h-3.5" />
-                      Verify Finding with Llama 3.1
+                      Verify Finding with Gemini
                     </button>
                   </div>
                 </div>

@@ -175,7 +175,7 @@ export const ObligationsTab: React.FC = () => {
                     }
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer self-start sm:self-auto"
                   >
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Verify with Llama 3.1
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Verify with Gemini
                   </button>
                 </div>
 

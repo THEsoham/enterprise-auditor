@@ -159,7 +159,7 @@ export const AuditMemoTab: React.FC = () => {
             <div>
               <div className="text-xs font-bold text-slate-800 mb-0.5">Independent Verification Available</div>
               <p className="text-xs text-slate-500">
-                Run an adversarial check with Llama 3.1 across all synthesized clauses and risk assessments in this memorandum.
+                Run an adversarial check with Gemini 3.6 Flash across all synthesized clauses and risk assessments in this memorandum.
               </p>
             </div>
             <button
@@ -171,7 +171,7 @@ export const AuditMemoTab: React.FC = () => {
               }
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 transition-colors cursor-pointer"
             >
-              <ShieldCheck className="w-4 h-4 text-emerald-600" /> Verify Memo with Llama 3.1
+              <ShieldCheck className="w-4 h-4 text-emerald-600" /> Verify Memo with Gemini
             </button>
           </div>
         </div>

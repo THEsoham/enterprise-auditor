@@ -13,56 +13,6 @@
     width: 100vw;
   }
 
-  /* Comprehensive Dark Mode Global Styles */
-  html.dark body,
-  html.dark #root,
-  html.dark .bg-slate-50 {
-    background-color: #0b0f19 !important;
-    color: #f3f4f6 !important;
-  }
-
-  html.dark {
-    color-scheme: dark;
-  }
-
-  html.dark .bg-white {
-    background-color: #111827 !important;
-  }
-
-  html.dark .bg-slate-100,
-  html.dark .bg-slate-200\/50 {
-    background-color: #1f2937 !important;
-  }
-
-  html.dark .border-slate-200,
-  html.dark .border-slate-100,
-  html.dark .border-slate-300 {
-    border-color: #1f2937 !important;
-  }
-
-  html.dark .text-slate-900,
-  html.dark .text-slate-800 {
-    color: #f9fafb !important;
-  }
-
-  html.dark .text-slate-700,
-  html.dark .text-slate-600 {
-    color: #e5e7eb !important;
-  }
-
-  html.dark .text-slate-500,
-  html.dark .text-slate-400 {
-    color: #9ca3af !important;
-  }
-
-  html.dark input,
-  html.dark textarea,
-  html.dark select {
-    background-color: #1f2937 !important;
-    color: #f9fafb !important;
-    border-color: #374151 !important;
-  }
-
   /* Clean light & dark scrollbars */
   ::-webkit-scrollbar {
     width: 6px;
@@ -77,12 +27,6 @@
   }
   ::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
-  }
-  html.dark ::-webkit-scrollbar-thumb {
-    background: #374151;
-  }
-  html.dark ::-webkit-scrollbar-thumb:hover {
-    background: #4b5563;
   }
 }
 
@@ -101,9 +45,118 @@
   border-bottom: 1px solid #e2e8f0;
 }
 
+/* =========================================================================
+   COMPREHENSIVE DARK MODE OVERRIDES (Placed outside @layer to guarantee persistence)
+   ========================================================================= */
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body,
+html.dark #root,
+html.dark .bg-slate-50,
+html.dark .bg-slate-50\/50 {
+  background-color: #0b0f19 !important;
+  color: #f3f4f6 !important;
+}
+
+html.dark .bg-white {
+  background-color: #111827 !important;
+  color: #f3f4f6 !important;
+}
+
+html.dark .bg-slate-100 {
+  background-color: #1f2937 !important;
+}
+
+html.dark .bg-slate-200,
+html.dark .bg-slate-200\/50 {
+  background-color: #374151 !important;
+  color: #e5e7eb !important;
+}
+
+html.dark .bg-blue-50 {
+  background-color: rgba(30, 58, 138, 0.25) !important;
+  border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+html.dark .bg-emerald-50 {
+  background-color: rgba(6, 78, 59, 0.25) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+}
+
+html.dark .bg-amber-50 {
+  background-color: rgba(120, 53, 15, 0.25) !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
+}
+
+html.dark .bg-rose-50 {
+  background-color: rgba(136, 19, 55, 0.25) !important;
+  border-color: rgba(244, 63, 94, 0.4) !important;
+}
+
+html.dark .border-slate-200,
+html.dark .border-slate-100,
+html.dark .border-slate-300 {
+  border-color: #1f2937 !important;
+}
+
+html.dark .text-slate-900,
+html.dark .text-slate-800 {
+  color: #f9fafb !important;
+}
+
+html.dark .text-slate-700,
+html.dark .text-slate-600 {
+  color: #e5e7eb !important;
+}
+
+html.dark .text-slate-500,
+html.dark .text-slate-400 {
+  color: #9ca3af !important;
+}
+
+html.dark .text-blue-900 {
+  color: #93c5fd !important;
+}
+
+html.dark .text-blue-800,
+html.dark .text-blue-700 {
+  color: #60a5fa !important;
+}
+
+html.dark .text-emerald-700 {
+  color: #34d399 !important;
+}
+
+html.dark .text-amber-700 {
+  color: #fbbf24 !important;
+}
+
+html.dark .text-rose-700 {
+  color: #fb7185 !important;
+}
+
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+  border-color: #374151 !important;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #374151;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}
+
 html.dark .legal-quote {
-  background: #1f2937;
-  color: #e5e7eb;
-  border-color: #374151;
-  border-left-color: #3b82f6;
+  background: #1f2937 !important;
+  color: #e5e7eb !important;
+  border-color: #374151 !important;
+  border-left-color: #3b82f6 !important;
 }
