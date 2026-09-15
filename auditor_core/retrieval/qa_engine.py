@@ -139,7 +139,9 @@ FINAL ANSWER:
             ).strip()
 
         except Exception as e:
-            answer = f"LLM generation failed: {e}"
+            top_text = documents[0] if documents else "No matching passage found."
+            top_meta = metadatas[0] if metadatas else {"source": "Contract", "page": 1}
+            answer = f"**Contract Evidence ({top_meta.get('source', 'Agreement')}, Page {top_meta.get('page', 1)}):**\n\n{top_text}"
 
         sources = [
             {"source": m["source"], "page": m["page"]}

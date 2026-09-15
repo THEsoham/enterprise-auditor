@@ -136,7 +136,26 @@ RISKS (JSON array):
             risks = self._parse_json_array(response_text)
 
         except Exception:
+            # Fallback rule-based risk detection over evidence text
             risks = []
+            risk_keywords = [
+                ("indemnif", "HIGH", "Indemnification & Third-Party Liability Provision"),
+                ("unlimited", "HIGH", "Uncapped Exposure / Unlimited Liability Clause"),
+                ("terminat", "MEDIUM", "Convenience Termination & Cancellation Terms"),
+                ("governing law", "MEDIUM", "Jurisdiction & Governing Law Provisions"),
+                ("penalty", "HIGH", "Financial Penalty & Liquidated Damages"),
+            ]
+            for kw, level, finding_title in risk_keywords:
+                for doc, meta in zip(documents, metadatas):
+                    if kw in doc.lower():
+                        risks.append({
+                            "risk_level": level,
+                            "clause_type": "contract_risk",
+                            "finding": f"{finding_title}: Found match in contract text.",
+                            "evidence": doc[:250],
+                            "pages": [meta.get("page", 1)]
+                        })
+                        break
 
         for risk in risks:
             risk["source"] = document_name

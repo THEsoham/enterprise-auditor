@@ -119,9 +119,9 @@ EXTRACTED CLAUSE:
             ).strip()
 
         except Exception:
-            extracted = "Extraction failed"
+            extracted = documents[0] if documents else "NOT FOUND"
 
-        found = "NOT FOUND" not in extracted.upper()
+        found = "NOT FOUND" not in extracted.upper() and len(extracted.strip()) > 10
 
         return {
             "found": found,

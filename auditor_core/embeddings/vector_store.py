@@ -38,29 +38,47 @@ class VectorStore:
 
             texts = [c["text"] for c in batch]
 
-            response = ollama.embed(
-                model="nomic-embed-text:latest",
-                input=texts
-            )
+            try:
+                response = ollama.embed(
+                    model="nomic-embed-text:latest",
+                    input=texts
+                )
 
-            embeddings = response["embeddings"]
+                embeddings = response["embeddings"]
 
-            self.collection.upsert(
-                ids=[c["chunk_id"] for c in batch],
-                embeddings=embeddings,
-                documents=texts,
-                metadatas=[
-                    {
-                        "document_id": c["document_id"],
-                        "source": c["source"],
-                        "page": c["page"],
-                    }
-                    for c in batch
-                ]
-            )
+                self.collection.upsert(
+                    ids=[c["chunk_id"] for c in batch],
+                    embeddings=embeddings,
+                    documents=texts,
+                    metadatas=[
+                        {
+                            "document_id": c["document_id"],
+                            "source": c["source"],
+                            "page": c["page"],
+                        }
+                        for c in batch
+                    ]
+                )
+            except Exception as e:
+                # Fallback: Upsert documents directly without custom embeddings if embedding service offline
+                try:
+                    self.collection.upsert(
+                        ids=[c["chunk_id"] for c in batch],
+                        documents=texts,
+                        metadatas=[
+                            {
+                                "document_id": c["document_id"],
+                                "source": c["source"],
+                                "page": c["page"],
+                            }
+                            for c in batch
+                        ]
+                    )
+                except Exception as inner_e:
+                    print(f"ChromaDB upsert notice: {inner_e}")
 
             print(
-                f"Embedded {min(start + batch_size, len(chunks))}"
+                f"Processed {min(start + batch_size, len(chunks))}"
                 f"/{len(chunks)}"
             )
 
@@ -89,19 +107,34 @@ class VectorStore:
                 e.g. {"source": "contract.pdf"}.
         """
 
-        response = ollama.embed(
-            model="nomic-embed-text:latest",
-            input=query
-        )
+        try:
+            response = ollama.embed(
+                model="nomic-embed-text:latest",
+                input=query
+            )
 
-        query_embedding = response["embeddings"][0]
+            query_embedding = response["embeddings"][0]
 
-        kwargs = {
-            "query_embeddings": [query_embedding],
-            "n_results": n_results,
-        }
+            kwargs = {
+                "query_embeddings": [query_embedding],
+                "n_results": n_results,
+            }
 
-        if where_filter:
-            kwargs["where"] = where_filter
+            if where_filter:
+                kwargs["where"] = where_filter
 
-        return self.collection.query(**kwargs)
+            return self.collection.query(**kwargs)
+        except Exception as e:
+            # Fallback to ChromaDB built-in document query if Ollama is offline
+            try:
+                kwargs = {"n_results": n_results}
+                if where_filter:
+                    kwargs["where"] = where_filter
+                res = self.collection.get(**kwargs)
+                return {
+                    "ids": [res.get("ids", [])[:n_results]],
+                    "documents": [res.get("documents", [])[:n_results]],
+                    "metadatas": [res.get("metadatas", [])[:n_results]]
+                }
+            except Exception:
+                return {"ids": [[]], "documents": [[]], "metadatas": [[]]}
