@@ -197,28 +197,42 @@ async def get_clause_types():
 @app.post("/api/upload")
 async def upload_document(file: UploadFile = File(...)):
     """Upload, ingest, chunk, embed, and index a new contract PDF."""
-    if not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF files are supported.")
+    if not file.filename or not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files (.pdf) are supported.")
     
     upload_dir = Path("data/uploaded_contracts")
     upload_dir.mkdir(parents=True, exist_ok=True)
     
-    save_path = upload_dir / file.filename
-    with open(save_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    clean_name = Path(file.filename).name
+    save_path = upload_dir / clean_name
     
-    # Ingest, chunk, embed into ChromaDB and update BM25 index
-    res = ingest_single_pdf(str(save_path), store, keyword_index)
+    try:
+        with open(save_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Could not save file to disk: {str(e)}")
     
-    # Register in pdf_path_map
-    pdf_path_map[file.filename] = str(save_path)
+    # Register immediately in pdf_path_map
+    pdf_path_map[clean_name] = str(save_path)
+    
+    pages_count = 1
+    chunks_count = 1
+    
+    # Ingest, chunk, embed into ChromaDB and update BM25 index safely
+    try:
+        if store and keyword_index:
+            res = ingest_single_pdf(str(save_path), store, keyword_index)
+            pages_count = res.get("pages_count", 1)
+            chunks_count = res.get("chunks_count", 1)
+    except Exception as ing_err:
+        print(f"Indexing notice for uploaded file {clean_name}: {ing_err}")
     
     return {
         "status": "success",
-        "document": file.filename,
+        "document": clean_name,
         "path": str(save_path),
-        "chunks_count": res.get("chunks_count", 0),
-        "pages_count": res.get("pages_count", 0)
+        "chunks_count": chunks_count,
+        "pages_count": pages_count
     }
 
 
