@@ -81,6 +81,11 @@ def init_engines():
         for p in DATASET_DIR.rglob("*.pdf"):
             pdf_path_map[p.name] = str(p)
 
+    sample_dir = Path("data/sample_contracts")
+    if sample_dir.exists():
+        for p in sample_dir.rglob("*.pdf"):
+            pdf_path_map[p.name] = str(p)
+
     upload_dir = Path("data/uploaded_contracts")
     if upload_dir.exists():
         for p in upload_dir.rglob("*.pdf"):

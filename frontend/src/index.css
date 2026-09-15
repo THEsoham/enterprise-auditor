@@ -13,10 +13,12 @@
     width: 100vw;
   }
 
-  /* Dark mode global overrides */
-  html.dark body {
-    background-color: #090d16;
-    color: #f1f5f9;
+  /* Comprehensive Dark Mode Global Styles */
+  html.dark body,
+  html.dark #root,
+  html.dark .bg-slate-50 {
+    background-color: #0b0f19 !important;
+    color: #f3f4f6 !important;
   }
 
   html.dark {
@@ -27,16 +29,14 @@
     background-color: #111827 !important;
   }
 
-  html.dark .bg-slate-50 {
-    background-color: #0b0f19 !important;
-  }
-
-  html.dark .bg-slate-100 {
+  html.dark .bg-slate-100,
+  html.dark .bg-slate-200\/50 {
     background-color: #1f2937 !important;
   }
 
   html.dark .border-slate-200,
-  html.dark .border-slate-100 {
+  html.dark .border-slate-100,
+  html.dark .border-slate-300 {
     border-color: #1f2937 !important;
   }
 
@@ -47,12 +47,20 @@
 
   html.dark .text-slate-700,
   html.dark .text-slate-600 {
-    color: #d1d5db !important;
+    color: #e5e7eb !important;
   }
 
   html.dark .text-slate-500,
   html.dark .text-slate-400 {
     color: #9ca3af !important;
+  }
+
+  html.dark input,
+  html.dark textarea,
+  html.dark select {
+    background-color: #1f2937 !important;
+    color: #f9fafb !important;
+    border-color: #374151 !important;
   }
 
   /* Clean light & dark scrollbars */
