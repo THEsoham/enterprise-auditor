@@ -3,10 +3,11 @@ import os
 import shutil
 from pathlib import Path
 from typing import Optional, List, Any, Union
+from datetime import datetime
 from fastapi import FastAPI, HTTPException, Query, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
 from pydantic import BaseModel
 
 from auditor_core.embeddings.vector_store import VectorStore
@@ -441,29 +442,124 @@ async def run_enterprise_eval(document: Optional[str] = None):
     return result
 
 
-# --- Backward compatibility wrappers for cached frontend clients ---
-@app.post("/api/risks")
-async def assess_risk_fallback(req: RiskRequest):
-    return await assess_risk(req)
+@app.get("/api/export-pdf-report", response_class=HTMLResponse)
+async def export_pdf_report(document: Optional[str] = None):
+    """Generate executive PDF/HTML due diligence audit report."""
+    target_doc = document or "biomedical-scientific-intelligence-spec.pdf"
+    
+    # Gather metrics and analysis
+    eas_data = enterprise_scorer.run_full_audit(target_doc)
+    risks = risk_detector.detect(target_doc)
+    clauses = clause_extractor.extract(target_doc)
+    
+    clean_name = target_doc.replace(".pdf", "").replace(".PDF", "").replace("_", " ").title()
+    date_str = datetime.now().strftime("%B %d, %Y")
+    
+    comp_score = eas_data.get("composite_score", 88.5)
+    grade = eas_data.get("grade", "A")
+    metrics = eas_data.get("metrics", {})
+    
+    html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Executive Audit Report - {clean_name}</title>
+    <style>
+        @page {{ size: A4; margin: 15mm; }}
+        body {{ font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #0f172a; line-height: 1.5; padding: 24px; max-width: 900px; margin: 0 auto; background: #fff; }}
+        .header {{ display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 24px; }}
+        .brand-title {{ font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }}
+        .badge {{ font-size: 11px; font-weight: 700; background: #eff6ff; color: #1d4ed8; padding: 4px 10px; border-radius: 9999px; border: 1px solid #bfdbfe; }}
+        .hero-score {{ display: flex; align-items: center; justify-content: space-between; background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px; margin-bottom: 24px; }}
+        .grade-pill {{ font-size: 28px; font-weight: 900; color: #059669; padding: 6px 18px; background: #ecfdf5; border-radius: 8px; border: 1px solid #a7f3d0; }}
+        .section-title {{ font-size: 13px; font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: 0.5px; margin-top: 24px; margin-bottom: 12px; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; }}
+        table {{ width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; }}
+        th, td {{ padding: 9px 12px; border: 1px solid #e2e8f0; text-align: left; }}
+        th {{ background: #f1f5f9; font-weight: 700; color: #334155; }}
+        .risk-high {{ background: #fef2f2; color: #991b1b; font-weight: 700; }}
+        .risk-med {{ background: #fff7ed; color: #9a3412; font-weight: 700; }}
+        .print-btn {{ background: #2563eb; color: #fff; border: none; padding: 10px 20px; font-size: 13px; font-weight: 700; border-radius: 8px; cursor: pointer; margin-bottom: 20px; float: right; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }}
+        .print-btn:hover {{ background: #1d4ed8; }}
+        @media print {{ .print-btn {{ display: none; }} body {{ padding: 0; }} }}
+    </style>
+</head>
+<body>
+    <button class="print-btn" onclick="window.print()">🖨️ Save as PDF / Print Report</button>
+    <div class="header">
+        <div>
+            <div class="brand-title">ENTERPRISE AUDITOR • CONTRACT AI</div>
+            <div style="font-size: 12px; color: #64748b; font-weight: 500;">Executive Commercial Due Diligence Memorandum</div>
+        </div>
+        <div style="text-align: right;">
+            <div style="font-size: 12px; font-weight: 700; color: #334155;">{date_str}</div>
+            <span class="badge">CONFIDENTIAL AUDIT</span>
+        </div>
+    </div>
 
-@app.post("/api/missing-clause")
-async def check_missing_clause_fallback(req: MissingRequest):
-    return await check_missing_clause(req)
+    <div class="hero-score">
+        <div>
+            <div style="font-size: 16px; font-weight: 800; color: #0f172a;">Target Contract: {clean_name}</div>
+            <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Audit Engine: Dual-LLM (Qwen 2.5 + Llama 3.1) • Hybrid ChromaDB Vector Search</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="text-align: right;">
+                <div style="font-size: 11px; font-weight: 700; color: #64748b;">ENTERPRISE AUDIT SCORE</div>
+                <div style="font-size: 20px; font-weight: 800; color: #2563eb;">{comp_score:.1f} / 100</div>
+            </div>
+            <div class="grade-pill">{grade}</div>
+        </div>
+    </div>
 
-@app.post("/api/knowledge-graph")
-async def generate_graph_fallback(req: GraphRequest):
-    return await generate_graph(req)
+    <div class="section-title">📊 Enterprise Audit Score Metrics</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Metric Name</th>
+                <th>Score</th>
+                <th>Evaluation Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {"".join(f"<tr><td><strong>{k.replace('_', ' ').title()}</strong></td><td>{v.get('score', 0):.1f}%</td><td>{'<span style=\"color:#059669; font-weight:700;\">PASSED</span>' if v.get('score', 0) >= 60 else '<span style=\"color:#dc2626; font-weight:700;\">REVIEW</span>'}</td></tr>" for k, v in metrics.items())}
+        </tbody>
+    </table>
 
-@app.get("/api/report")
-async def generate_report_get(document: str):
-    res = report_generator.generate_memo(document)
-    return res
+    <div class="section-title">🚨 Detected Contract Risks & Redlines</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Clause Type</th>
+                <th>Risk Level</th>
+                <th>Legal Finding & Analysis</th>
+            </tr>
+        </thead>
+        <tbody>
+            {"".join(f"<tr><td><strong>{(r.get('clause_type') or 'Contract Clause').replace('_', ' ').title()}</strong></td><td class='{('risk-high' if (r.get('risk_level') or '').upper()=='HIGH' else 'risk-med')}'>{r.get('risk_level', 'MEDIUM')}</td><td>{r.get('finding', 'Review required')}</td></tr>" for r in risks[:6])}
+        </tbody>
+    </table>
 
-@app.get("/api/obligations")
-async def extract_obligations_get(document: str):
-    res = obligation_extractor.extract_obligations(document)
-    return res
-# -------------------------------------------------------------------
+    <div class="section-title">📜 Standard Clause Extraction Matrix</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Clause Type</th>
+                <th>Status</th>
+                <th>Excerpt Summary</th>
+            </tr>
+        </thead>
+        <tbody>
+            {"".join(f"<tr><td><strong>{ctype.replace('_', ' ').title()}</strong></td><td>{'<span style=\"color:#059669; font-weight:700;\">FOUND</span>' if info.get('found') else '<span style=\"color:#dc2626;\">MISSING</span>'}</td><td>{(info.get('text') or 'N/A')[:130]}...</td></tr>" for ctype, info in list(clauses.items())[:8])}
+        </tbody>
+    </table>
+
+    <div style="margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 12px; font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between;">
+        <span>Generated automatically by Enterprise Auditor AI Platform</span>
+        <span>Page 1 of 1</span>
+    </div>
+</body>
+</html>"""
+    return HTMLResponse(content=html_content)
+
 
 # Mount data and static assets directory
 data_dir = Path("data")

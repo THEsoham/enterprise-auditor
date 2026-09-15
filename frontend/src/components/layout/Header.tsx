@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sun, Moon, Database, Cpu, CheckCircle2 } from 'lucide-react';
+import { Sun, Moon, Database, Cpu, CheckCircle2, FileDown } from 'lucide-react';
 import { useAudit } from '../../context/AuditContext';
 
 export const Header: React.FC = () => {
@@ -8,6 +8,11 @@ export const Header: React.FC = () => {
   const cleanDocName = selectedDocument
     ? selectedDocument.replace(/\.pdf$/i, '')
     : null;
+
+  const handleExportPdf = () => {
+    const docParam = selectedDocument ? `?document=${encodeURIComponent(selectedDocument)}` : '';
+    window.open(`/api/export-pdf-report${docParam}`, '_blank');
+  };
 
   return (
     <header className="h-16 px-6 bg-white border-b border-slate-200 flex items-center justify-between z-30 shrink-0 select-none shadow-xs">
@@ -86,6 +91,16 @@ export const Header: React.FC = () => {
             </span>
           </div>
         </div>
+
+        {/* Export PDF Report Button */}
+        <button
+          onClick={handleExportPdf}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-all cursor-pointer"
+          title="Export Executive Due Diligence PDF Report"
+        >
+          <FileDown className="w-4 h-4" />
+          <span>Export PDF</span>
+        </button>
 
         {/* Theme Toggle */}
         <button
