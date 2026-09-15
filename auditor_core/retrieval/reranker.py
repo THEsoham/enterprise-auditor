@@ -46,33 +46,9 @@ class Reranker:
         prompt = self._build_prompt(query, documents)
 
         try:
-
-            response = ollama.chat(
-                model=self.model,
-
-                messages=[
-                    {
-                        "role": "user",
-                        "content": prompt,
-                    }
-                ],
-
-                think=False,
-
-                options={
-                    "temperature": 0,
-                    "num_predict": 300,
-                },
-            )
-
-            response_text = response["message"].get(
-                "content", ""
-            )
-
-            scores = self._parse_scores(
-                response_text, n
-            )
-
+            from auditor_core.llm.cloud_llm import query_llm
+            response_text = query_llm(prompt, ollama_model=self.model, max_tokens=300)
+            scores = self._parse_scores(response_text, n)
         except Exception as e:
 
             print(

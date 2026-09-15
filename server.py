@@ -4,7 +4,7 @@ import shutil
 from pathlib import Path
 from typing import Optional, List, Any, Union
 from datetime import datetime
-from fastapi import FastAPI, HTTPException, Query, UploadFile, File
+from fastapi import FastAPI, HTTPException, Query, UploadFile, File, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
@@ -204,8 +204,16 @@ async def get_clause_types():
     return {"clause_types": CLAUSE_TYPES}
 
 
+def background_ingest(save_path: str):
+    try:
+        if store and keyword_index:
+            ingest_single_pdf(save_path, store, keyword_index)
+    except Exception as ing_err:
+        print(f"Background indexing notice for {save_path}: {ing_err}")
+
+
 @app.post("/api/upload")
-async def upload_document(file: UploadFile = File(...)):
+async def upload_document(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     """Upload, ingest, chunk, embed, and index a new contract PDF."""
     if not file or not file.filename:
         raise HTTPException(status_code=400, detail="No file selected for upload.")
@@ -233,24 +241,15 @@ async def upload_document(file: UploadFile = File(...)):
     # Register immediately in pdf_path_map
     pdf_path_map[clean_name] = str(save_path)
     
-    pages_count = 1
-    chunks_count = 1
-    
-    # Ingest, chunk, embed into ChromaDB and update BM25 index safely
-    try:
-        if store and keyword_index:
-            res = ingest_single_pdf(str(save_path), store, keyword_index)
-            pages_count = max(1, res.get("pages_count", 1))
-            chunks_count = max(1, res.get("chunks_count", 1))
-    except Exception as ing_err:
-        print(f"Indexing notice for uploaded file {clean_name}: {ing_err}")
+    # Trigger background indexing for Instantaneous HTTP response (<100ms)
+    background_tasks.add_task(background_ingest, str(save_path))
     
     return {
         "status": "success",
         "document": clean_name,
         "path": str(save_path),
-        "chunks_count": chunks_count,
-        "pages_count": pages_count
+        "chunks_count": 1,
+        "pages_count": 1
     }
 
 

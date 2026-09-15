@@ -1,32 +1,36 @@
-"""Multi-Tier LLM Bridge with automatic fallback across Ollama, OpenAI GPT-4o-mini, and Gemini 3.6 Flash."""
+"""Multi-Tier LLM Bridge with automatic fallback across OpenAI GPT-4o-mini, Gemini, and Ollama."""
 
 import os
 import requests
-import ollama
 
-# Read keys strictly from environment variables or .env
+def _load_env_if_needed():
+    """Ensure .env is loaded if API keys are not in os.environ."""
+    if not os.environ.get("OPENAI_API_KEY") or not os.environ.get("GEMINI_API_KEY"):
+        env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env")
+        if os.path.exists(env_path):
+            try:
+                with open(env_path, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            k, v = line.split("=", 1)
+                            k, v = k.strip(), v.strip().strip("'\"")
+                            if k and not os.environ.get(k):
+                                os.environ[k] = v
+            except Exception as e:
+                print(f"Notice loading .env file: {e}")
+
+_load_env_if_needed()
+
 OPENAI_KEY = os.environ.get("OPENAI_API_KEY", "")
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "")
 
 
 def query_llm(prompt: str, ollama_model: str = "qwen2.5:latest", max_tokens: int = 800) -> str:
-    """Query Ollama -> OpenAI (gpt-4o-mini) -> Gemini (3.6-flash)."""
+    """Query OpenAI (gpt-4o-mini) -> Gemini (3.6-flash/2.0-flash) -> Local Ollama."""
+    _load_env_if_needed()
 
-    # Tier 1: Local Ollama
-    try:
-        res = ollama.chat(
-            model=ollama_model,
-            messages=[{"role": "user", "content": prompt}],
-            think=False,
-            options={"temperature": 0.1, "num_predict": max_tokens}
-        )
-        content = res["message"].get("content", "").strip()
-        if content:
-            return content
-    except Exception as e:
-        print(f"Ollama local notice: {e}, attempting OpenAI fallback...")
-
-    # Tier 2: OpenAI gpt-4o-mini
+    # Tier 1: OpenAI gpt-4o-mini (Primary Cloud Engine)
     oai_key = os.environ.get("OPENAI_API_KEY", OPENAI_KEY)
     if oai_key:
         try:
@@ -50,27 +54,44 @@ def query_llm(prompt: str, ollama_model: str = "qwen2.5:latest", max_tokens: int
         except Exception as oai_err:
             print(f"OpenAI API fallback notice: {oai_err}")
 
-    # Tier 3: Gemini 3.6 Flash
+    # Tier 2: Gemini API
     gem_key = os.environ.get("GEMINI_API_KEY", GEMINI_KEY)
     if gem_key:
-        try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={gem_key}"
-            resp = requests.post(
-                url,
-                json={
-                    "contents": [{"parts": [{"text": prompt}]}],
-                    "generationConfig": {
-                        "temperature": 0.2,
-                        "maxOutputTokens": max_tokens
-                    }
-                },
-                timeout=12
-            )
-            if resp.status_code == 200:
-                text = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
-                if text:
-                    return text
-        except Exception as gem_err:
-            print(f"Gemini API fallback notice: {gem_err}")
+        for model_name in ["gemini-3.6-flash", "gemini-2.0-flash", "gemini-2.5-flash"]:
+            try:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={gem_key}"
+                resp = requests.post(
+                    url,
+                    json={
+                        "contents": [{"parts": [{"text": prompt}]}],
+                        "generationConfig": {
+                            "temperature": 0.2,
+                            "maxOutputTokens": max_tokens
+                        }
+                    },
+                    timeout=10
+                )
+                if resp.status_code == 200:
+                    text = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+                    if text:
+                        return text
+            except Exception as gem_err:
+                print(f"Gemini {model_name} notice: {gem_err}")
+
+    # Tier 3: Local Ollama (Fallback for offline/GPU local runs)
+    try:
+        import ollama
+        res = ollama.chat(
+            model=ollama_model,
+            messages=[{"role": "user", "content": prompt}],
+            think=False,
+            options={"temperature": 0.1, "num_predict": max_tokens}
+        )
+        content = res["message"].get("content", "").strip()
+        if content:
+            return content
+    except Exception as e:
+        print(f"Ollama local notice: {e}")
 
     return ""
+
