@@ -170,10 +170,10 @@ async def get_stats():
         "total_documents": len(all_docs),
         "total_vectors": vector_count,
         "models": {
-            "llm_generation": "qwen2.5:latest",
-            "llm_verification": "llama3.1:latest",
-            "embeddings": "nomic-embed-text:latest",
-            "vlm": "minicpm-v"
+            "llm_generation": "GPT-4o-mini / Qwen 2.5",
+            "llm_verification": "Gemini 3.6 Flash / Llama 3.1",
+            "embeddings": "ChromaDB / Nomic Embed",
+            "vlm": "MiniCPM-V Vision"
         },
         "status": "ready"
     }
