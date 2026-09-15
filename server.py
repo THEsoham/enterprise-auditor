@@ -22,6 +22,7 @@ from auditor_core.models.comparator import ClauseComparator
 from auditor_core.verification.verifier import Verifier
 from auditor_core.graph.knowledge_graph import KnowledgeGraph
 from auditor_core.evaluation.evaluator import Evaluator
+from auditor_core.evaluation.enterprise_scorer import EnterpriseScorer
 from auditor_core.ingestion.table_extractor import extract_tables
 from auditor_core.ingestion.image_extractor import extract_images, render_page_as_image
 from auditor_core.models.vlm_analyzer import VLMAnalyzer
@@ -57,6 +58,7 @@ comparator: Optional[ClauseComparator] = None
 verifier: Optional[Verifier] = None
 knowledge_graph: Optional[KnowledgeGraph] = None
 evaluator: Optional[Evaluator] = None
+enterprise_scorer: Optional[EnterpriseScorer] = None
 vlm_analyzer: Optional[VLMAnalyzer] = None
 report_generator: Optional[ReportGenerator] = None
 obligation_extractor: Optional[ObligationExtractor] = None
@@ -68,7 +70,7 @@ pdf_path_map = {}
 def init_engines():
     global store, keyword_index, retriever, reranker, qa_engine
     global clause_extractor, clause_analyzer, risk_detector, missing_detector
-    global comparator, verifier, knowledge_graph, evaluator, vlm_analyzer
+    global comparator, verifier, knowledge_graph, evaluator, enterprise_scorer, vlm_analyzer
     global report_generator, obligation_extractor, pdf_path_map
 
     print("Initializing Enterprise Auditor Engines for Web UI...")
@@ -93,6 +95,7 @@ def init_engines():
     verifier = Verifier()
     knowledge_graph = KnowledgeGraph()
     evaluator = Evaluator(qa_engine)
+    enterprise_scorer = EnterpriseScorer(qa_engine, clause_extractor, risk_detector, verifier, store)
     vlm_analyzer = VLMAnalyzer()
     report_generator = ReportGenerator(qa_engine, clause_extractor, clause_analyzer, risk_detector, missing_detector)
     obligation_extractor = ObligationExtractor(qa_engine)
@@ -156,8 +159,8 @@ async def get_stats():
         "total_documents": len(all_docs),
         "total_vectors": vector_count,
         "models": {
-            "llm_generation": "qwen3.5:4b",
-            "llm_verification": "llama3.1:8b",
+            "llm_generation": "qwen2.5:latest",
+            "llm_verification": "llama3.1:latest",
             "embeddings": "nomic-embed-text:latest",
             "vlm": "minicpm-v"
         },
@@ -429,6 +432,13 @@ async def run_evaluation():
     """Run built-in benchmark evaluation suite."""
     summary = evaluator.run()
     return summary
+
+
+@app.get("/api/enterprise-eval")
+async def run_enterprise_eval(document: Optional[str] = None):
+    """Run the 6-metric Enterprise Audit Score suite."""
+    result = enterprise_scorer.run_full_audit(document)
+    return result
 
 
 # --- Backward compatibility wrappers for cached frontend clients ---

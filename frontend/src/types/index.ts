@@ -148,4 +148,26 @@ export interface EvalSummary {
   results: EvalResultItem[];
 }
 
-export const TYPES_VERSION = '1.0.0';
+export interface EnterpriseMetricDetail {
+  score: number;
+  label: string;
+  abbrev: string;
+  [key: string]: any;
+}
+
+export interface EnterpriseEvalSummary {
+  document: string;
+  composite_score: number;
+  grade: string;
+  metrics: {
+    clause_coverage: EnterpriseMetricDetail;
+    risk_detection: EnterpriseMetricDetail;
+    cross_reference: EnterpriseMetricDetail;
+    adversarial_robustness: EnterpriseMetricDetail;
+    latency_compliance: EnterpriseMetricDetail;
+    hallucination_guard: EnterpriseMetricDetail;
+  };
+  weights: Record<string, number>;
+}
+
+export const TYPES_VERSION = '1.1.0';

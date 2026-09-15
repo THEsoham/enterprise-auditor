@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, Sun, Moon, Database, Cpu, CheckCircle2 } from 'lucide-react';
+import { Sun, Moon, Database, Cpu, CheckCircle2 } from 'lucide-react';
 import { useAudit } from '../../context/AuditContext';
 
 export const Header: React.FC = () => {
@@ -13,8 +13,8 @@ export const Header: React.FC = () => {
     <header className="h-16 px-6 bg-white border-b border-slate-200 flex items-center justify-between z-30 shrink-0 select-none shadow-xs">
       {/* Brand Identity (Duck Creek / Clean Enterprise Style) */}
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-sm shrink-0">
-          <ShieldCheck className="w-5 h-5 text-white" />
+        <div className="w-9 h-9 rounded-lg overflow-hidden shadow-sm shrink-0">
+          <img src="/logo.jpg" alt="Enterprise Auditor" className="w-full h-full object-cover" />
         </div>
         <div>
           <div className="flex items-center gap-2">

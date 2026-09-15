@@ -12,7 +12,8 @@ import type {
   ReportResponse,
   TableItem,
   ImageItem,
-  EvalSummary
+  EvalSummary,
+  EnterpriseEvalSummary
 } from '../types';
 
 const BASE_URL = '/api';
@@ -124,6 +125,11 @@ export const api = {
     ),
 
   runEval: () => fetchJson<EvalSummary>(`${BASE_URL}/eval`),
+
+  runEnterpriseEval: (document?: string) =>
+    fetchJson<EnterpriseEvalSummary>(
+      `${BASE_URL}/enterprise-eval${document ? `?document=${encodeURIComponent(document)}` : ''}`
+    ),
 
   uploadContract: async (file: File) => {
     const formData = new FormData();
