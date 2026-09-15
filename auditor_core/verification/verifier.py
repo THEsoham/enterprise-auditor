@@ -62,23 +62,10 @@ VERDICT:
 """
 
         try:
-
-            response = ollama.chat(
-                model=self.model,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ],
-                think=False,
-                options={
-                    "temperature": 0,
-                    "num_predict": 300,
-                },
-            )
-
-            answer = response["message"].get(
-                "content", ""
-            ).strip()
-
+            from auditor_core.llm.cloud_llm import query_llm
+            answer = query_llm(prompt, self.model, max_tokens=400)
+            if not answer:
+                raise ValueError("No LLM answer received")
         except Exception:
             # Fallback textual alignment verification when LLM is offline
             if not evidence_text.strip() or "insufficient evidence" in finding.lower():

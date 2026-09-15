@@ -121,23 +121,12 @@ FINAL ANSWER:
 """
 
         try:
-
-            response = ollama.chat(
-                model=self.model,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ],
-                think=False,
-                options={
-                    "temperature": 0,
-                    "num_predict": 800,
-                },
-            )
-
-            answer = response["message"].get(
-                "content", ""
-            ).strip()
-
+            from auditor_core.llm.cloud_llm import query_llm
+            answer = query_llm(prompt, self.model, max_tokens=800)
+            if not answer:
+                top_text = documents[0] if documents else "No matching passage found."
+                top_meta = metadatas[0] if metadatas else {"source": "Contract", "page": 1}
+                answer = f"**Contract Evidence ({top_meta.get('source', 'Agreement')}, Page {top_meta.get('page', 1)}):**\n\n{top_text}"
         except Exception as e:
             top_text = documents[0] if documents else "No matching passage found."
             top_meta = metadatas[0] if metadatas else {"source": "Contract", "page": 1}

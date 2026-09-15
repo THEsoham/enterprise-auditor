@@ -72,23 +72,10 @@ DETERMINATION:
 """
 
         try:
-
-            response = ollama.chat(
-                model=self.model,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ],
-                think=False,
-                options={
-                    "temperature": 0,
-                    "num_predict": 400,
-                },
-            )
-
-            answer = response["message"].get(
-                "content", ""
-            ).strip()
-
+            from auditor_core.llm.cloud_llm import query_llm
+            answer = query_llm(prompt, self.model, max_tokens=400)
+            if not answer:
+                raise ValueError("No LLM answer received")
         except Exception:
             found = any(label.lower() in d.lower() or clause_type.replace('_', ' ').lower() in d.lower() for d in documents)
             status_str = "FOUND" if found else "NOT_FOUND"

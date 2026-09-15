@@ -101,23 +101,10 @@ EXTRACTED CLAUSE:
 """
 
         try:
-
-            response = ollama.chat(
-                model=self.model,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ],
-                think=False,
-                options={
-                    "temperature": 0,
-                    "num_predict": 600,
-                },
-            )
-
-            extracted = response["message"].get(
-                "content", ""
-            ).strip()
-
+            from auditor_core.llm.cloud_llm import query_llm
+            extracted = query_llm(prompt, self.model, max_tokens=600)
+            if not extracted:
+                extracted = documents[0] if documents else "NOT FOUND"
         except Exception:
             extracted = documents[0] if documents else "NOT FOUND"
 
