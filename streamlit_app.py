@@ -3,6 +3,16 @@
 import json
 import time
 from pathlib import Path
+
+try:
+    from dotenv import load_dotenv
+    _env_path = Path(__file__).resolve().parent / ".env"
+    if _env_path.exists():
+        load_dotenv(_env_path)
+    else:
+        load_dotenv()
+except ImportError:
+    pass
 import streamlit as st
 
 from auditor_core.embeddings.vector_store import VectorStore

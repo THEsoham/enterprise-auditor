@@ -19,6 +19,23 @@ from typing import Any, Dict, List, Optional
 
 import requests
 
+try:
+    from dotenv import load_dotenv
+    from pathlib import Path
+    _env_candidates = [
+        Path.cwd() / ".env",
+        Path(__file__).resolve().parent.parent.parent / ".env",
+        Path(__file__).resolve().parent / ".env",
+    ]
+    for _p in _env_candidates:
+        if _p.exists():
+            load_dotenv(_p)
+            break
+    else:
+        load_dotenv()
+except ImportError:
+    pass
+
 
 logger = logging.getLogger(__name__)
 
@@ -51,12 +68,38 @@ DEFAULT_TIMEOUT = (5, 60)
 # Key helpers — never log key values
 # ===================================================================
 
+def _ensure_env_loaded() -> None:
+    """Ensure .env is loaded if keys are missing from os.environ."""
+    if not os.getenv("OPENAI_API_KEY") or not os.getenv("GEMINI_API_KEY"):
+        try:
+            from dotenv import load_dotenv
+            from pathlib import Path
+            for _p in [
+                Path.cwd() / ".env",
+                Path(__file__).resolve().parent.parent.parent / ".env",
+                Path(__file__).resolve().parent / ".env",
+            ]:
+                if _p.exists():
+                    load_dotenv(_p)
+                    break
+        except ImportError:
+            pass
+
+
 def _get_openai_key() -> str:
-    return os.getenv("OPENAI_API_KEY", "").strip()
+    key = os.getenv("OPENAI_API_KEY", "").strip()
+    if not key:
+        _ensure_env_loaded()
+        key = os.getenv("OPENAI_API_KEY", "").strip()
+    return key
 
 
 def _get_gemini_key() -> str:
-    return os.getenv("GEMINI_API_KEY", "").strip()
+    key = os.getenv("GEMINI_API_KEY", "").strip()
+    if not key:
+        _ensure_env_loaded()
+        key = os.getenv("GEMINI_API_KEY", "").strip()
+    return key
 
 
 # ===================================================================

@@ -2,6 +2,17 @@ import json
 import os
 import shutil
 from pathlib import Path
+
+try:
+    from dotenv import load_dotenv
+    _env_path = Path(__file__).resolve().parent / ".env"
+    if _env_path.exists():
+        load_dotenv(_env_path)
+    else:
+        load_dotenv()
+except ImportError:
+    pass
+
 from typing import Optional, List, Any, Union
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, Query, UploadFile, File, BackgroundTasks
