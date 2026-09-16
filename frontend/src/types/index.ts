@@ -89,10 +89,17 @@ export interface CompareResponse {
 }
 
 export interface VerifyResult {
-  finding: string;
-  verdict: 'SUPPORTED' | 'NOT_SUPPORTED' | 'PARTIALLY_SUPPORTED' | string;
-  confidence: string;
-  reasoning: string;
+  verdict: 'SUPPORTED' | 'NOT_SUPPORTED' | 'PARTIALLY_SUPPORTED';
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  supported_claims: string[];
+  unsupported_claims: string[];
+  contradictions: string[];
+  missing_information: string[];
+  correction: string;
+  explanation: string;
+  // Backward-compatible fields
+  reasoning?: string;
+  supported?: boolean;
   model?: string;
 }
 

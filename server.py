@@ -151,6 +151,8 @@ class CompareRequest(BaseModel):
 class VerifyRequest(BaseModel):
     finding: str
     evidence: Union[List[Any], str, None] = []
+    question: Optional[str] = None
+    metadata: Optional[List[Any]] = None
 
 
 class GraphRequest(BaseModel):
@@ -171,7 +173,7 @@ async def get_stats():
         "total_vectors": vector_count,
         "models": {
             "llm_generation": "OpenAI GPT-4o-mini",
-            "llm_verification": "Google Gemini 3.6 Flash",
+            "llm_verification": f"Google Gemini ({os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')})",
             "embeddings": "ChromaDB / Nomic Embed",
             "vlm": "MiniCPM-V Vision"
         },
@@ -330,7 +332,7 @@ async def compare_clauses(req: CompareRequest):
 
 @app.post("/api/verify")
 async def verify_finding(req: VerifyRequest):
-    """Verify finding against evidence with skeptical verifier LLM pass."""
+    """Verify finding against evidence with Gemini skeptical verifier."""
     raw_evidence = req.evidence or []
     if isinstance(raw_evidence, str):
         cleaned_evidence = [raw_evidence] if raw_evidence.strip() else []
@@ -340,12 +342,18 @@ async def verify_finding(req: VerifyRequest):
             if isinstance(e, str):
                 cleaned_evidence.append(e)
             elif isinstance(e, dict):
-                cleaned_evidence.append(e.get("text", e.get("content", str(e))))
+                # Preserve dict evidence so verifier gets page/source metadata
+                cleaned_evidence.append(e)
             elif e is not None:
                 cleaned_evidence.append(str(e))
     else:
         cleaned_evidence = [str(raw_evidence)]
-    result = verifier.verify(req.finding, cleaned_evidence)
+    result = verifier.verify(
+        finding=req.finding,
+        evidence=cleaned_evidence,
+        question=req.question or "",
+        metadata=req.metadata,
+    )
     return result
 
 
@@ -556,7 +564,7 @@ async def export_pdf_report(document: Optional[str] = None):
     <div class="hero-score">
         <div>
             <div style="font-size: 16px; font-weight: 800; color: #0f172a;">Target Contract: {clean_name}</div>
-            <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Audit Engine: Dual-LLM (Qwen 2.5 + Llama 3.1) • Hybrid ChromaDB Vector Search</div>
+            <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Audit Engine: OpenAI GPT-4o-mini + Gemini Verifier • Hybrid ChromaDB Vector Search</div>
         </div>
         <div style="display: flex; align-items: center; gap: 16px;">
             <div style="text-align: right;">
