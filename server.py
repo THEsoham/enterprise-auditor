@@ -204,20 +204,33 @@ async def get_stats():
 
 @app.get("/api/documents")
 async def get_documents():
-    """List all available contracts."""
+    """List all available contracts, prioritizing Sample and Uploaded contracts at the top."""
     docs = []
-    for name, path in sorted(pdf_path_map.items()):
-        # Infer category from path
-        parts = Path(path).parts
-        category = "General"
-        if len(parts) > 4:
-            category = parts[-2]
+    for name, path in pdf_path_map.items():
+        path_str = str(Path(path)).replace("\\", "/")
+        if "sample_contracts" in path_str:
+            category = "Sample"
+            priority = 0
+        elif "uploaded_contracts" in path_str:
+            category = "Uploaded"
+            priority = 1
+        else:
+            parts = Path(path).parts
+            category = parts[-2] if len(parts) > 4 else "CUAD"
+            priority = 2
         
         docs.append({
             "name": name,
             "category": category,
-            "path": path
+            "path": path,
+            "priority": priority,
         })
+    
+    # Sort priority (Sample -> Uploaded -> CUAD), then alphabetically by name
+    docs.sort(key=lambda d: (d["priority"], d["name"].lower()))
+    for d in docs:
+        del d["priority"]
+
     return {"documents": docs, "count": len(docs)}
 
 

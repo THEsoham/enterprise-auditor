@@ -167,6 +167,8 @@ export const Sidebar: React.FC = () => {
               const isSelected = selectedDocument === doc.name;
               const cleanTitle = doc.name.replace(/\.pdf$/i, '');
               const category = doc.category || 'General';
+              const isSample = category === 'Sample';
+              const isUploaded = category === 'Uploaded';
 
               return (
                 <div
@@ -175,24 +177,46 @@ export const Sidebar: React.FC = () => {
                   className={`flex items-center gap-2.5 p-2 rounded-lg cursor-pointer transition-all ${
                     isSelected
                       ? 'bg-blue-50 border border-blue-300 text-blue-900 shadow-2xs font-medium'
+                      : isSample
+                      ? 'bg-amber-50/40 hover:bg-amber-50 border border-amber-200/60 text-slate-800'
+                      : isUploaded
+                      ? 'bg-emerald-50/40 hover:bg-emerald-50 border border-emerald-200/60 text-slate-800'
                       : 'hover:bg-slate-100 border border-transparent text-slate-700'
                   }`}
                   title={doc.name}
                 >
                   <div
                     className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${
-                      isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'
+                      isSelected
+                        ? 'bg-blue-600 text-white'
+                        : isSample
+                        ? 'bg-amber-100 text-amber-700'
+                        : isUploaded
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-slate-100 text-slate-500'
                     }`}
                   >
                     <FileText className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs truncate leading-tight">{cleanTitle}</div>
-                    <div className="text-[10px] text-slate-500 truncate">{category} Agreement</div>
+                    <div className="text-xs truncate leading-tight font-medium">{cleanTitle}</div>
+                    <div className="text-[10px] text-slate-500 truncate">
+                      {isSample ? 'Featured Sample Agreement' : isUploaded ? 'User Uploaded Contract' : `${category} Agreement`}
+                    </div>
                   </div>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
-                    {category.substring(0, 8)}
-                  </span>
+                  {isSample ? (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200 shrink-0">
+                      ⭐ Sample
+                    </span>
+                  ) : isUploaded ? (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0">
+                      📤 Uploaded
+                    </span>
+                  ) : (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
+                      {category.substring(0, 8)}
+                    </span>
+                  )}
                 </div>
               );
             })
