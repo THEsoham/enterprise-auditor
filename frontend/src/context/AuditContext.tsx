@@ -47,13 +47,65 @@ interface AuditContextType {
 
 const AuditContext = createContext<AuditContextType | undefined>(undefined);
 
+const TAB_ALIASES: Record<string, string> = {
+  copilot: 'copilot',
+  ask: 'copilot',
+  clauses: 'clauses',
+  'clause-studio': 'clauses',
+  risks: 'risks',
+  risk: 'risks',
+  'risk-audit': 'risks',
+  missing: 'missing',
+  'missing-clauses': 'missing',
+  'missing-clause': 'missing',
+  compare: 'compare',
+  comparator: 'compare',
+  graph: 'graph',
+  'knowledge-graph': 'graph',
+  obligations: 'obligations',
+  tables: 'tables',
+  'tables-images': 'tables',
+  report: 'report',
+  memo: 'report',
+  eval: 'eval',
+  benchmark: 'eval',
+};
+
+function resolveTabFromUrl(): string {
+  if (typeof window === 'undefined') return 'copilot';
+  const path = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+  if (TAB_ALIASES[path]) return TAB_ALIASES[path];
+  const hash = window.location.hash.replace(/^#+/, '').toLowerCase();
+  if (TAB_ALIASES[hash]) return TAB_ALIASES[hash];
+  return 'copilot';
+}
+
 export const AuditProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [filteredDocuments, setFilteredDocuments] = useState<DocumentItem[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('copilot');
+  const [activeTab, setActiveTabState] = useState<string>(resolveTabFromUrl);
+
+  const setActiveTab = (tab: string) => {
+    setActiveTabState(tab);
+    if (typeof window !== 'undefined' && window.history && window.history.pushState) {
+      const currentPath = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+      if (currentPath !== tab) {
+        window.history.pushState({ tab }, '', `/${tab}`);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setActiveTabState(resolveTabFromUrl());
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('ea_theme');
@@ -82,6 +134,7 @@ export const AuditProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     evidence: null,
     result: null,
     loading: false,
+    error: null,
   });
 
   const [evidenceModal, setEvidenceModal] = useState<EvidenceModalState>({
@@ -126,6 +179,16 @@ export const AuditProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const data = await api.getDocuments();
       setDocuments(data.documents);
       setFilteredDocuments(data.documents);
+      setSelectedDocument((prev) => {
+        if (prev) return prev;
+        if (data.documents && data.documents.length > 0) {
+          const preferred = data.documents.find((d: any) =>
+            /agreement|contract|affiliate|distributor/i.test(d.name)
+          ) || data.documents[0];
+          return preferred.name;
+        }
+        return null;
+      });
     } catch (e) {
       showToast('Failed to load contract catalog', 'error');
     }

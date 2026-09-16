@@ -104,6 +104,16 @@ def init_engines():
 
     store = VectorStore()
     keyword_index = KeywordIndex()
+
+    # If ChromaDB is empty (e.g. on Render or fresh clone), auto-index bundled sample contracts
+    if store.collection.count() == 0 and sample_dir.exists():
+        print("ChromaDB vector store is empty. Auto-indexing bundled sample contracts...")
+        for p in sample_dir.glob("*.pdf"):
+            try:
+                ingest_single_pdf(str(p), store, keyword_index)
+            except Exception as e:
+                print(f"Sample contract auto-index note ({p.name}): {e}")
+
     keyword_index.build_from_store(store)
     retriever = HybridRetriever(store, keyword_index)
     reranker = Reranker()
@@ -317,7 +327,7 @@ async def extract_clause_detail(req: ExtractDetailRequest):
 
 @app.post("/api/risk")
 async def assess_risk(req: RiskRequest):
-    """Analyze contract for risky clauses and provisions."""
+    """Analyze contract for risky clauses and provisions (POST)."""
     if not req.document:
         raise HTTPException(status_code=400, detail="Document name required.")
     
@@ -338,14 +348,74 @@ async def assess_risk(req: RiskRequest):
     }
 
 
+@app.get("/api/risk")
+async def get_assess_risk(document: Optional[str] = Query(None, description="Document filename")):
+    """Analyze contract for risky clauses and provisions (GET / browser query)."""
+    doc_name = document
+    if not doc_name:
+        all_docs = list(pdf_path_map.keys())
+        if all_docs:
+            preferred = [d for d in all_docs if any(k in d.lower() for k in ["agreement", "contract", "affiliate", "distributor"])]
+            doc_name = preferred[0] if preferred else all_docs[0]
+        else:
+            raise HTTPException(status_code=400, detail="Document parameter required and no contracts found.")
+    
+    risks = risk_detector.detect(doc_name)
+    high_count = sum(1 for r in risks if str(r.get("severity", r.get("risk_level", ""))).upper() == "HIGH")
+    medium_count = sum(1 for r in risks if str(r.get("severity", r.get("risk_level", ""))).upper() == "MEDIUM")
+    low_count = sum(1 for r in risks if str(r.get("severity", r.get("risk_level", ""))).upper() == "LOW")
+
+    return {
+        "document": doc_name,
+        "risks": risks,
+        "total_risks": len(risks),
+        "severity_counts": {
+            "HIGH": high_count,
+            "MEDIUM": medium_count,
+            "LOW": low_count,
+        }
+    }
+
+
 @app.post("/api/missing")
 async def check_missing_clause(req: MissingRequest):
-    """Check whether a clause type is present or missing in a contract."""
+    """Check whether a clause type is present or missing in a contract (POST)."""
     if not req.document:
         raise HTTPException(status_code=400, detail="Document name required.")
     clause_type = req.clause_type.strip().lower().replace(" ", "_")
     result = missing_detector.check(req.document, clause_type)
     return result
+
+
+@app.get("/api/missing")
+async def get_missing_clause(
+    document: Optional[str] = Query(None, description="Document filename"),
+    clause_type: Optional[str] = Query("force_majeure", description="Target clause type"),
+):
+    """Check whether a clause type is present or missing in a contract (GET / browser query)."""
+    doc_name = document
+    if not doc_name:
+        all_docs = list(pdf_path_map.keys())
+        if all_docs:
+            preferred = [d for d in all_docs if any(k in d.lower() for k in ["agreement", "contract", "affiliate", "distributor"])]
+            doc_name = preferred[0] if preferred else all_docs[0]
+        else:
+            raise HTTPException(status_code=400, detail="Document parameter required and no contracts found.")
+    
+    clean_type = (clause_type or "force_majeure").strip().lower().replace(" ", "_")
+    result = missing_detector.check(doc_name, clean_type)
+    return result
+
+
+@app.get("/api/verify")
+async def get_verify_status():
+    """Health / usage check for Gemini skeptical verifier."""
+    return {
+        "status": "ready",
+        "verifier": "Google Gemini (gemini-3.6-flash)",
+        "method": "POST /api/verify",
+        "description": "Adversarial skeptical verification of findings against retrieved document excerpts."
+    }
 
 
 @app.post("/api/compare")
@@ -652,14 +722,50 @@ async def export_pdf_report(document: Optional[str] = None):
     return HTMLResponse(content=html_content)
 
 
-# Mount data and static assets directory
+# Mount data directory
 data_dir = Path("data")
 data_dir.mkdir(exist_ok=True)
 app.mount("/data", StaticFiles(directory=str(data_dir)), name="data")
 
 web_dir = Path(__file__).parent / "web"
 web_dir.mkdir(exist_ok=True)
-app.mount("/", StaticFiles(directory=str(web_dir), html=True), name="web")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def get_favicon():
+    """Serve favicon without 404."""
+    icon_path = web_dir / "favicon.ico"
+    if icon_path.exists():
+        return FileResponse(icon_path)
+    svg_path = web_dir / "icons.svg"
+    if svg_path.exists():
+        return FileResponse(svg_path, media_type="image/svg+xml")
+    return HTMLResponse(content="", status_code=204)
+
+
+# Mount static assets subdirectory (js, css, icons, etc.)
+assets_dir = web_dir / "assets"
+if assets_dir.exists():
+    app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+
+
+# SPA catch-all route: serves index.html for all non-API web routes
+@app.get("/{full_path:path}", include_in_schema=False)
+async def spa_fallback(full_path: str):
+    """Serve static file or fallback to index.html for SPA client-side routing."""
+    # Prevent intercepting /api routes
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="API endpoint not found.")
+    
+    file_path = web_dir / full_path
+    if file_path.is_file():
+        return FileResponse(file_path)
+    
+    index_file = web_dir / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
+    
+    return HTMLResponse(content="<h1>Enterprise Auditor</h1><p>Web frontend initializing...</p>", status_code=200)
 
 
 if __name__ == "__main__":
