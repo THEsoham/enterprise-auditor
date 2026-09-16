@@ -173,7 +173,7 @@ async def get_stats():
         "total_vectors": vector_count,
         "models": {
             "llm_generation": "OpenAI GPT-4o-mini",
-            "llm_verification": f"Google Gemini ({os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')})",
+            "llm_verification": f"Google Gemini ({os.getenv('GEMINI_MODEL', 'gemini-3.6-flash')})",
             "embeddings": "ChromaDB / Nomic Embed",
             "vlm": "MiniCPM-V Vision"
         },

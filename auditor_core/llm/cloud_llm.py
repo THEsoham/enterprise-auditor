@@ -35,7 +35,7 @@ GEMINI_URL = (
 # Configurable model names
 # ---------------------------------------------------------------------------
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
 
 ENABLE_OLLAMA_FALLBACK = (
     os.getenv("ENABLE_OLLAMA_FALLBACK", "false").lower() == "true"
@@ -162,6 +162,9 @@ def _query_gemini(prompt: str, max_tokens: int) -> str:
     """
     Call Google Gemini generateContent API.
 
+    Tries configured GEMINI_MODEL first, and falls back to modern alternatives
+    (gemini-3.6-flash, gemini-flash-latest) if the configured model is unavailable (e.g. 404).
+
     Returns the response text or raises on failure.
     """
     api_key = _get_gemini_key()
@@ -171,64 +174,93 @@ def _query_gemini(prompt: str, max_tokens: int) -> str:
             "Set the GEMINI_API_KEY environment variable."
         )
 
-    url = GEMINI_URL.format(model=GEMINI_MODEL)
+    # Candidate models in order of priority
+    candidate_models = [GEMINI_MODEL]
+    for fallback in ["gemini-3.6-flash", "gemini-flash-latest"]:
+        if fallback not in candidate_models:
+            candidate_models.append(fallback)
 
-    try:
-        response = requests.post(
-            url,
-            params={"key": api_key},
-            headers={
-                "Content-Type": "application/json",
-            },
-            json={
-                "contents": [
-                    {
-                        "role": "user",
-                        "parts": [
-                            {
-                                "text": prompt,
-                            }
-                        ],
-                    }
-                ],
-                "generationConfig": {
-                    "temperature": 0.1,
-                    "maxOutputTokens": max_tokens,
+    last_error: Optional[Exception] = None
+
+    for model_name in candidate_models:
+        url = GEMINI_URL.format(model=model_name)
+
+        try:
+            response = requests.post(
+                url,
+                params={"key": api_key},
+                headers={
+                    "Content-Type": "application/json",
                 },
-            },
-            timeout=DEFAULT_TIMEOUT,
-        )
-    except requests.Timeout as error:
-        raise RuntimeError(f"Gemini request timed out: {error}") from error
-    except requests.ConnectionError as error:
-        raise RuntimeError(
-            f"Gemini connection failed: {error}"
-        ) from error
-    except requests.RequestException as error:
-        raise RuntimeError(f"Gemini request failed: {error}") from error
+                json={
+                    "contents": [
+                        {
+                            "role": "user",
+                            "parts": [
+                                {
+                                    "text": prompt,
+                                }
+                            ],
+                        }
+                    ],
+                    "generationConfig": {
+                        "temperature": 0.1,
+                        "maxOutputTokens": max_tokens,
+                    },
+                },
+                timeout=DEFAULT_TIMEOUT,
+            )
+        except requests.Timeout as error:
+            last_error = RuntimeError(
+                f"Gemini [{model_name}] request timed out: {error}"
+            )
+            continue
+        except requests.ConnectionError as error:
+            last_error = RuntimeError(
+                f"Gemini [{model_name}] connection failed: {error}"
+            )
+            continue
+        except requests.RequestException as error:
+            last_error = RuntimeError(
+                f"Gemini [{model_name}] request failed: {error}"
+            )
+            continue
 
-    if response.status_code != 200:
-        detail = response.text[:500]
-        raise RuntimeError(
-            f"Gemini [{GEMINI_MODEL}] returned HTTP "
-            f"{response.status_code}: {detail}"
-        )
+        if response.status_code != 200:
+            detail = response.text[:500]
+            logger.warning(
+                "Gemini [%s] returned HTTP %s: %s. Trying next candidate model.",
+                model_name,
+                response.status_code,
+                detail,
+            )
+            last_error = RuntimeError(
+                f"Gemini [{model_name}] returned HTTP "
+                f"{response.status_code}: {detail}"
+            )
+            continue
 
-    try:
-        data = response.json()
-    except ValueError as error:
-        raise RuntimeError(
-            f"Gemini returned invalid JSON: {error}"
-        ) from error
+        try:
+            data = response.json()
+        except ValueError as error:
+            last_error = RuntimeError(
+                f"Gemini [{model_name}] returned invalid JSON: {error}"
+            )
+            continue
 
-    text = _extract_gemini_text(data)
-    if not text:
-        raise RuntimeError(
-            f"Gemini [{GEMINI_MODEL}] returned an empty response."
-        )
+        text = _extract_gemini_text(data)
+        if not text:
+            last_error = RuntimeError(
+                f"Gemini [{model_name}] returned an empty response."
+            )
+            continue
 
-    logger.info("Gemini [%s] responded successfully.", GEMINI_MODEL)
-    return text
+        logger.info("Gemini [%s] responded successfully.", model_name)
+        return text
+
+    raise last_error or RuntimeError(
+        "Gemini verification failed for all candidate models."
+    )
 
 
 def _query_ollama(

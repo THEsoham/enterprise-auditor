@@ -78,7 +78,7 @@ export const VerifyModal: React.FC = () => {
             <div>
               <h3 className="text-sm font-bold text-slate-900">AI Skeptical Verifier</h3>
               <p className="text-[11px] text-slate-500 font-medium">
-                Adversarial scrutiny powered by <strong className="text-emerald-700">Gemini 2.5 Flash</strong>
+                Adversarial scrutiny powered by <strong className="text-emerald-700">Gemini 3.6 Flash</strong>
               </p>
             </div>
           </div>
