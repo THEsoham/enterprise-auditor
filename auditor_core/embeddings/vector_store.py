@@ -60,10 +60,12 @@ class VectorStore:
                     ]
                 )
             except Exception as e:
-                # Fallback: Upsert documents directly without custom embeddings if embedding service offline
+                # Fallback: Upsert with lightweight embeddings so Chroma doesn't attempt heavy ONNX downloads
                 try:
+                    fallback_embeddings = [[0.0] * 384 for _ in texts]
                     self.collection.upsert(
                         ids=[c["chunk_id"] for c in batch],
+                        embeddings=fallback_embeddings,
                         documents=texts,
                         metadatas=[
                             {
@@ -126,16 +128,17 @@ class VectorStore:
 
             return self.collection.query(**kwargs)
         except Exception as e:
-            # Fallback to ChromaDB built-in document query if Ollama is offline
+            # Fallback to ChromaDB collection.get() if Ollama is offline
             try:
-                kwargs = {"n_results": n_results}
+                get_kwargs = {"limit": n_results}
                 if where_filter:
-                    kwargs["where"] = where_filter
-                res = self.collection.get(**kwargs)
+                    get_kwargs["where"] = where_filter
+                res = self.collection.get(**get_kwargs)
                 return {
                     "ids": [res.get("ids", [])[:n_results]],
                     "documents": [res.get("documents", [])[:n_results]],
                     "metadatas": [res.get("metadatas", [])[:n_results]]
                 }
-            except Exception:
+            except Exception as inner_err:
+                print(f"Vector search fallback notice: {inner_err}")
                 return {"ids": [[]], "documents": [[]], "metadatas": [[]]}
