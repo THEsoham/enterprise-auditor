@@ -70,6 +70,24 @@ class HybridRetriever:
                 fused[key][0][:n_candidates]
             ]
 
+        # Fallback: if fusion produced 0 results for a specific document filter,
+        # retrieve top chunks from that document so queries like "What is this document about?"
+        # or general summary questions always have valid context to answer.
+        if document_filter and (not fused["documents"] or not fused["documents"][0]):
+            try:
+                fallback_res = self.vector_store.collection.get(
+                    where={"source": document_filter},
+                    limit=n_candidates
+                )
+                if fallback_res.get("documents"):
+                    return {
+                        "ids": [fallback_res.get("ids", [])[:n_candidates]],
+                        "documents": [fallback_res.get("documents", [])[:n_candidates]],
+                        "metadatas": [fallback_res.get("metadatas", [])[:n_candidates]],
+                    }
+            except Exception as e:
+                print(f"Hybrid retrieval fallback notice: {e}")
+
         return fused
 
     def _rrf_fusion(self, *result_sets, k=60):

@@ -19,11 +19,11 @@ export const CopilotTab: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const quickPrompts = [
+    'Summarize the core purpose and key commercial terms of this agreement',
     'What are the termination conditions and notice periods?',
     'What are the payment terms, fee schedules, and penalties?',
     'What confidentiality obligations and survival periods exist?',
     'What are the indemnification obligations and liability caps?',
-    'Are there any non-compete or exclusivity restrictions?',
   ];
 
   const handleSend = async (queryText?: string) => {

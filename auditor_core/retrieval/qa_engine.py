@@ -86,34 +86,24 @@ class QAEngine:
 
         context = "\n\n".join(context_parts)
 
-        prompt = f"""You are a document analysis assistant.
+        prompt = f"""You are a senior corporate contract analyst and document intelligence assistant.
 
-Your job is to answer the user's question using
-ONLY the provided document evidence.
+Your task is to answer the user's question accurately using ONLY the provided document evidence below.
 
-IMPORTANT RULES:
-
-1. Use only the supplied evidence.
-2. Do not use outside knowledge.
-3. Do not invent or assume facts.
-4. If the evidence does not contain the answer,
-   respond exactly:
-
-Insufficient evidence in the provided documents.
-
-5. Keep the answer concise and factual.
-6. When answering, mention the relevant document
-   name and page number.
-7. If multiple documents contain relevant information,
-   distinguish them clearly.
-8. Return ONLY the final answer.
+INSTRUCTIONS:
+1. Ground your answer strictly in the supplied document evidence.
+2. Cite the specific document name and page number for key facts (e.g. [Page 4] or (Document: ..., Page X)).
+3. If the evidence answers the question directly, provide a clear, concise, structured answer.
+4. If the user asks about a specific commercial clause (e.g. governing law, termination, indemnity) that is NOT present in the provided excerpts:
+   - State clearly: "The provided excerpts for this document do not contain provisions regarding [topic]."
+   - Briefly summarize what the excerpts do discuss instead.
+5. If the evidence contains general overview information, use it to answer overview and summary questions constructively.
+6. Do not fabricate or hallucinate legal terms or covenants not found in the text.
 
 USER QUESTION:
-
 {question}
 
 DOCUMENT EVIDENCE:
-
 {context}
 
 FINAL ANSWER:
