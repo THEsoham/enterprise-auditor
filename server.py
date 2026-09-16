@@ -322,12 +322,27 @@ async def assess_risk(req: RiskRequest):
         raise HTTPException(status_code=400, detail="Document name required.")
     
     risks = risk_detector.detect(req.document)
-    return {"document": req.document, "risks": risks}
+    high_count = sum(1 for r in risks if str(r.get("severity", r.get("risk_level", ""))).upper() == "HIGH")
+    medium_count = sum(1 for r in risks if str(r.get("severity", r.get("risk_level", ""))).upper() == "MEDIUM")
+    low_count = sum(1 for r in risks if str(r.get("severity", r.get("risk_level", ""))).upper() == "LOW")
+
+    return {
+        "document": req.document,
+        "risks": risks,
+        "total_risks": len(risks),
+        "severity_counts": {
+            "HIGH": high_count,
+            "MEDIUM": medium_count,
+            "LOW": low_count,
+        }
+    }
 
 
 @app.post("/api/missing")
 async def check_missing_clause(req: MissingRequest):
     """Check whether a clause type is present or missing in a contract."""
+    if not req.document:
+        raise HTTPException(status_code=400, detail="Document name required.")
     clause_type = req.clause_type.strip().lower().replace(" ", "_")
     result = missing_detector.check(req.document, clause_type)
     return result

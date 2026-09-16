@@ -27,7 +27,7 @@ const DEFAULT_CLAUSE_TYPES = [
 ];
 
 export const MissingClauseTab: React.FC = () => {
-  const { selectedDocument, openVerifier, showToast } = useAudit();
+  const { selectedDocument, setSelectedDocument, documents, openVerifier, showToast } = useAudit();
 
   const [clauseTypes, setClauseTypes] = useState<string[]>(DEFAULT_CLAUSE_TYPES);
   const [selectedClause, setSelectedClause] = useState<string>('force_majeure');
@@ -68,9 +68,23 @@ export const MissingClauseTab: React.FC = () => {
           <FileQuestion className="w-7 h-7" />
         </div>
         <h2 className="text-base font-bold text-slate-800 mb-1">Select an Agreement to Test for Missing Clauses</h2>
-        <p className="text-xs text-slate-500 max-w-md mx-auto">
+        <p className="text-xs text-slate-500 max-w-md mx-auto mb-4">
           Choose an executed agreement to verify whether critical covenants (e.g. Force Majeure, IP Indemnity, or GDPR protections) are completely absent.
         </p>
+        {documents.length > 0 && (
+          <div className="max-w-md mx-auto flex items-center gap-2">
+            <select
+              onChange={(e) => e.target.value && setSelectedDocument(e.target.value)}
+              className="flex-1 px-3 py-2 text-xs border border-slate-300 rounded-lg bg-slate-50 text-slate-800 font-medium focus:bg-white focus:outline-none cursor-pointer"
+              defaultValue=""
+            >
+              <option value="" disabled>Choose from {documents.length} contracts...</option>
+              {documents.map((d) => (
+                <option key={d.name} value={d.name}>{d.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
     );
   }
@@ -153,12 +167,14 @@ export const MissingClauseTab: React.FC = () => {
             </div>
 
             <button
-              onClick={() =>
+              onClick={() => {
+                const docName = result.document || (result as any).source || selectedDocument || 'Contract';
+                const evList = result.evidence || (result as any).evidence_searched || result.detail;
                 openVerifier(
-                  `Clause '${result.clause_type}' is ${result.status} in ${result.document}.`,
-                  result.detail
-                )
-              }
+                  `Clause '${result.clause_type}' is ${result.status} in ${docName}. Analysis: ${result.detail}`,
+                  evList
+                );
+              }}
               className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer self-start sm:self-auto"
             >
               <ShieldCheck className="w-3.5 h-3.5" /> Verify with Gemini
@@ -176,13 +192,17 @@ export const MissingClauseTab: React.FC = () => {
           </div>
 
           {/* Evidence Citations */}
-          {result.evidence && Array.isArray(result.evidence) && result.evidence.length > 0 && (
+          {((result.evidence && Array.isArray(result.evidence) && result.evidence.length > 0) ||
+            (Array.isArray((result as any).evidence_searched) && (result as any).evidence_searched.length > 0)) && (
             <div className="pt-2">
               <div className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                 Contextual Contract Excerpts
               </div>
               <div className="space-y-2">
-                {result.evidence.map((ev: any, idx: number) => {
+                {(result.evidence && Array.isArray(result.evidence) && result.evidence.length > 0
+                  ? result.evidence
+                  : (result as any).evidence_searched.map((s: string) => ({ text: s, source: result.document || (result as any).source }))
+                ).map((ev: any, idx: number) => {
                   const evText = typeof ev === 'string' ? ev : ev.text || '';
                   const evSource = typeof ev === 'object' ? ev.source || '' : '';
                   const evPage = typeof ev === 'object' ? ev.page : '';

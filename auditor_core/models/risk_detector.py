@@ -98,12 +98,23 @@ class RiskDetector:
         prompt = f"""Analyze this contract for risky provisions.
 
 For each risk found, provide:
-- risk_level: HIGH, MEDIUM, or LOW
-- clause: which clause type
-- finding: what the risk is
-- evidence: exact quote from the text
+- severity: HIGH, MEDIUM, or LOW
+- risk_type: which clause or provision type
+- description: concise description of what the legal or commercial risk is
+- evidence: exact quote from the contract text
+- recommendation: actionable advice to mitigate or renegotiate this risk
 
-Return a JSON array of risk objects.
+Return a JSON array of risk objects using this format:
+[
+  {{
+    "severity": "HIGH",
+    "risk_type": "Indemnification",
+    "description": "Broad indemnification obligation without financial cap.",
+    "evidence": "exact quote here",
+    "recommendation": "Negotiate a mutual indemnity and cap liability at contract value."
+  }}
+]
+
 If no risks found, return: []
 
 CONTRACT TEXT:
@@ -116,34 +127,66 @@ RISKS (JSON array):
         try:
             from auditor_core.llm.cloud_llm import query_llm
             response_text = query_llm(prompt, ollama_model=self.model, max_tokens=800)
-            risks = self._parse_json_array(response_text)
-
+            raw_risks = self._parse_json_array(response_text)
         except Exception:
+            raw_risks = []
+
+        if not raw_risks:
             # Fallback rule-based risk detection over evidence text
-            risks = []
+            raw_risks = []
             risk_keywords = [
-                ("indemnif", "HIGH", "Indemnification & Third-Party Liability Provision"),
-                ("unlimited", "HIGH", "Uncapped Exposure / Unlimited Liability Clause"),
-                ("terminat", "MEDIUM", "Convenience Termination & Cancellation Terms"),
-                ("governing law", "MEDIUM", "Jurisdiction & Governing Law Provisions"),
-                ("penalty", "HIGH", "Financial Penalty & Liquidated Damages"),
+                ("indemnif", "HIGH", "Indemnification & Third-Party Liability Provision", "Introduce mutual indemnity and express monetary cap."),
+                ("unlimited", "HIGH", "Uncapped Exposure / Unlimited Liability Clause", "Cap maximum aggregate exposure to fees paid in prior 12 months."),
+                ("terminat", "MEDIUM", "Convenience Termination & Cancellation Terms", "Require minimum 30 days written notice and reimbursement for unrecouped costs."),
+                ("governing law", "MEDIUM", "Jurisdiction & Governing Law Provisions", "Standardize venue to neutral jurisdiction or mutual dispute resolution."),
+                ("penalty", "HIGH", "Financial Penalty & Liquidated Damages", "Convert liquidated damages to actual direct damages with reasonable cap."),
             ]
-            for kw, level, finding_title in risk_keywords:
+            for kw, level, finding_title, mitigation in risk_keywords:
                 for doc, meta in zip(documents, metadatas):
                     if kw in doc.lower():
-                        risks.append({
+                        raw_risks.append({
+                            "severity": level,
                             "risk_level": level,
+                            "risk_type": finding_title,
+                            "clause": "contract_risk",
                             "clause_type": "contract_risk",
-                            "finding": f"{finding_title}: Found match in contract text.",
+                            "description": f"{finding_title}: Identified in contract text.",
+                            "finding": f"{finding_title}: Identified in contract text.",
                             "evidence": doc[:250],
-                            "pages": [meta.get("page", 1)]
+                            "recommendation": mitigation,
+                            "pages": [meta.get("page", 1)],
                         })
                         break
 
-        for risk in risks:
-            risk["source"] = document_name
+        normalized = []
+        for r in raw_risks:
+            if not isinstance(r, dict):
+                continue
+            lvl = str(r.get("severity") or r.get("risk_level") or "MEDIUM").upper()
+            if lvl not in ("HIGH", "MEDIUM", "LOW"):
+                lvl = "HIGH" if "HIGH" in lvl else ("LOW" if "LOW" in lvl else "MEDIUM")
 
-        return risks
+            c_type = r.get("risk_type") or r.get("clause") or r.get("clause_type") or "Commercial Risk"
+            desc = r.get("description") or r.get("finding") or "Contractual liability detected."
+            ev = r.get("evidence") or ""
+            rec = r.get("recommendation") or f"Review {c_type} language and request customary mutual protections."
+
+            normalized.append({
+                "severity": lvl,
+                "risk_level": lvl,
+                "risk_type": c_type,
+                "clause": c_type,
+                "clause_type": c_type,
+                "description": desc,
+                "finding": desc,
+                "evidence": ev,
+                "recommendation": rec,
+                "document": document_name,
+                "source": document_name,
+                "pages": r.get("pages", []),
+            })
+
+        return normalized
 
     def _assess_risk(
         self, clause_type, text, source, pages
@@ -186,7 +229,32 @@ RISKS (JSON array):
         try:
             from auditor_core.llm.cloud_llm import query_llm
             response_text = query_llm(prompt, self.model, max_tokens=600)
-            return self._parse_json_array(response_text)
+            raw = self._parse_json_array(response_text)
+            normalized = []
+            for r in raw:
+                if not isinstance(r, dict):
+                    continue
+                lvl = str(r.get("severity") or r.get("risk_level") or "MEDIUM").upper()
+                if lvl not in ("HIGH", "MEDIUM", "LOW"):
+                    lvl = "HIGH" if "HIGH" in lvl else ("LOW" if "LOW" in lvl else "MEDIUM")
+                desc = r.get("description") or r.get("finding") or "Risk identified."
+                ev = r.get("evidence") or ""
+                rec = r.get("recommendation") or f"Standardize {label} terms with mutual safeguards."
+                normalized.append({
+                    "severity": lvl,
+                    "risk_level": lvl,
+                    "risk_type": label.title(),
+                    "clause": clause_type,
+                    "clause_type": clause_type,
+                    "description": desc,
+                    "finding": desc,
+                    "evidence": ev,
+                    "recommendation": rec,
+                    "document": source,
+                    "source": source,
+                    "pages": pages,
+                })
+            return normalized
         except Exception:
             return []
 

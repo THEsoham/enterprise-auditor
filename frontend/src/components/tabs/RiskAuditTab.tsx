@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 export const RiskAuditTab: React.FC = () => {
-  const { selectedDocument, openVerifier, openEvidenceModal, showToast } = useAudit();
+  const { selectedDocument, setSelectedDocument, documents, openVerifier, openEvidenceModal, showToast } = useAudit();
 
   const [loading, setLoading] = useState(false);
   const [riskData, setRiskData] = useState<RiskResponse | null>(null);
@@ -48,9 +48,23 @@ export const RiskAuditTab: React.FC = () => {
           <ShieldAlert className="w-7 h-7" />
         </div>
         <h2 className="text-base font-bold text-slate-800 mb-1">Select an Agreement to Run Risk Audit</h2>
-        <p className="text-xs text-slate-500 max-w-md mx-auto">
-          Choose an agreement from the sidebar to scan for uncapped liabilities, non-standard indemnities, and regulatory hazards.
+        <p className="text-xs text-slate-500 max-w-md mx-auto mb-4">
+          Choose an agreement to scan for uncapped liabilities, non-standard indemnities, and regulatory hazards.
         </p>
+        {documents.length > 0 && (
+          <div className="max-w-md mx-auto flex items-center gap-2">
+            <select
+              onChange={(e) => e.target.value && setSelectedDocument(e.target.value)}
+              className="flex-1 px-3 py-2 text-xs border border-slate-300 rounded-lg bg-slate-50 text-slate-800 font-medium focus:bg-white focus:outline-none cursor-pointer"
+              defaultValue=""
+            >
+              <option value="" disabled>Choose from {documents.length} contracts...</option>
+              {documents.map((d) => (
+                <option key={d.name} value={d.name}>{d.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
     );
   }
@@ -58,12 +72,13 @@ export const RiskAuditTab: React.FC = () => {
   const risks = riskData?.risks || [];
   const filteredRisks = risks.filter((r) => {
     if (filter === 'ALL') return true;
-    return r.severity === filter;
+    const sev = String(r.severity || (r as any).risk_level || 'MEDIUM').toUpperCase();
+    return sev === filter;
   });
 
-  const highCount = riskData?.severity_counts?.HIGH ?? risks.filter(r => r.severity === 'HIGH').length;
-  const mediumCount = riskData?.severity_counts?.MEDIUM ?? risks.filter(r => r.severity === 'MEDIUM').length;
-  const lowCount = riskData?.severity_counts?.LOW ?? risks.filter(r => r.severity === 'LOW').length;
+  const highCount = riskData?.severity_counts?.HIGH ?? risks.filter(r => String(r.severity || (r as any).risk_level || '').toUpperCase() === 'HIGH').length;
+  const mediumCount = riskData?.severity_counts?.MEDIUM ?? risks.filter(r => String(r.severity || (r as any).risk_level || '').toUpperCase() === 'MEDIUM').length;
+  const lowCount = riskData?.severity_counts?.LOW ?? risks.filter(r => String(r.severity || (r as any).risk_level || '').toUpperCase() === 'LOW').length;
 
   return (
     <div className="space-y-5">
@@ -184,9 +199,14 @@ export const RiskAuditTab: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-3.5">
-          {filteredRisks.map((finding, idx) => {
-            const isHigh = finding.severity === 'HIGH';
-            const isMedium = finding.severity === 'MEDIUM';
+          {filteredRisks.map((finding: any, idx) => {
+            const severity = String(finding.severity || finding.risk_level || 'MEDIUM').toUpperCase();
+            const riskType = finding.risk_type || finding.clause || finding.clause_type || 'Contract Risk';
+            const description = finding.description || finding.finding || 'Risk identified in contract text.';
+            const evidence = finding.evidence || '';
+            const recommendation = finding.recommendation || '';
+            const isHigh = severity === 'HIGH';
+            const isMedium = severity === 'MEDIUM';
 
             return (
               <div
@@ -205,16 +225,16 @@ export const RiskAuditTab: React.FC = () => {
                           : 'bg-blue-50 text-blue-700 border-blue-200'
                       }`}
                     >
-                      {finding.severity}
+                      {severity}
                     </span>
-                    <h3 className="text-sm font-bold text-slate-900">{finding.risk_type}</h3>
+                    <h3 className="text-sm font-bold text-slate-900">{riskType}</h3>
                   </div>
 
                   <button
                     onClick={() =>
                       openVerifier(
-                        `Risk Finding: [${finding.severity}] ${finding.risk_type}: ${finding.description}`,
-                        finding.evidence
+                        `Risk Finding: [${severity}] ${riskType}: ${description}`,
+                        evidence
                       )
                     }
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer self-start sm:self-auto"
@@ -224,19 +244,19 @@ export const RiskAuditTab: React.FC = () => {
                 </div>
 
                 {/* Description */}
-                <p className="text-xs text-slate-700 leading-relaxed font-medium">{finding.description}</p>
+                <p className="text-xs text-slate-700 leading-relaxed font-medium">{description}</p>
 
                 {/* Evidence Quote Block */}
-                {finding.evidence && (
+                {evidence && (
                   <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700 leading-relaxed font-serif italic">
-                    "{finding.evidence.length > 340
-                      ? `${finding.evidence.slice(0, 340)}...`
-                      : finding.evidence}"
+                    "{evidence.length > 340
+                      ? `${evidence.slice(0, 340)}...`
+                      : evidence}"
 
-                    {finding.evidence.length > 340 && (
+                    {evidence.length > 340 && (
                       <button
                         onClick={() =>
-                          openEvidenceModal(`Contract Evidence: ${finding.risk_type}`, finding.evidence)
+                          openEvidenceModal(`Contract Evidence: ${riskType}`, evidence)
                         }
                         className="inline-flex items-center gap-1 ml-2 not-italic text-blue-600 hover:underline font-sans text-xs font-semibold cursor-pointer"
                       >
@@ -247,12 +267,12 @@ export const RiskAuditTab: React.FC = () => {
                 )}
 
                 {/* Recommendation / Actionable Mitigation */}
-                {finding.recommendation && (
+                {recommendation && (
                   <div className="flex items-start gap-2.5 p-3 rounded-lg bg-blue-50 border border-blue-200 text-xs text-blue-900">
                     <Lightbulb className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                     <div>
                       <span className="font-bold mr-1">Recommended Mitigation:</span>
-                      {finding.recommendation}
+                      {recommendation}
                     </div>
                   </div>
                 )}
