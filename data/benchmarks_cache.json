@@ -1,0 +1,231 @@
+{
+  "cuad_eval": {
+    "total_questions": 10,
+    "answered": 10,
+    "answer_rate": 100.0,
+    "keyword_score": 50.0,
+    "avg_keyword_score": 50.0,
+    "avg_latency_s": 2.9,
+    "avg_time_seconds": 2.9,
+    "avg_sources": 5.0,
+    "results": [
+      {
+        "question": "What are the termination conditions?",
+        "document": null,
+        "has_answer": true,
+        "answered": true,
+        "keyword_hits": 1,
+        "keyword_total": 3,
+        "keyword_score": 0.33,
+        "sources_count": 5,
+        "num_sources": 5,
+        "time_seconds": 4.3,
+        "latency_seconds": 4.3,
+        "answer_preview": "The termination conditions for the Fuse Medical Distributor Agreement are outlined in the following clauses: 1. General Termination: Termination shall not affect any accrued rights or liabilities."
+      },
+      {
+        "question": "What happens if there is a material breach?",
+        "document": null,
+        "has_answer": true,
+        "answered": true,
+        "keyword_hits": 1,
+        "keyword_total": 3,
+        "keyword_score": 0.33,
+        "sources_count": 5,
+        "num_sources": 5,
+        "time_seconds": 2.3,
+        "latency_seconds": 2.3,
+        "answer_preview": "If there is a material breach of any material term of the agreement, the other party must be notified in writing. If the breach is remediable, the breaching party has a period to cure."
+      },
+      {
+        "question": "What are the confidentiality obligations?",
+        "document": null,
+        "has_answer": true,
+        "answered": true,
+        "keyword_hits": 1,
+        "keyword_total": 3,
+        "keyword_score": 0.33,
+        "sources_count": 5,
+        "num_sources": 5,
+        "time_seconds": 2.4,
+        "latency_seconds": 2.4,
+        "answer_preview": "The agreement references a strict confidentiality section governing non-disclosure of proprietary information, customer lists, and financial terms."
+      },
+      {
+        "question": "What are the indemnification provisions?",
+        "document": null,
+        "has_answer": true,
+        "answered": true,
+        "keyword_hits": 1,
+        "keyword_total": 3,
+        "keyword_score": 0.33,
+        "sources_count": 5,
+        "num_sources": 5,
+        "time_seconds": 2.0,
+        "latency_seconds": 2.0,
+        "answer_preview": "The Supplier agrees to indemnify and hold harmless the Distributor against liabilities arising from product defects and third-party patent or copyright infringement."
+      },
+      {
+        "question": "What is the governing law?",
+        "document": null,
+        "has_answer": true,
+        "answered": true,
+        "keyword_hits": 2,
+        "keyword_total": 3,
+        "keyword_score": 0.67,
+        "sources_count": 5,
+        "time_seconds": 2.1,
+        "latency_seconds": 2.1,
+        "answer_preview": "The agreement is governed by and construed in accordance with the laws of the specified jurisdiction, with exclusive venue in the commercial courts."
+      },
+      {
+        "question": "Are there any assignment restrictions?",
+        "document": null,
+        "has_answer": true,
+        "answered": true,
+        "keyword_hits": 2,
+        "keyword_total": 3,
+        "keyword_score": 0.67,
+        "sources_count": 5,
+        "num_sources": 5,
+        "time_seconds": 2.6,
+        "latency_seconds": 2.6,
+        "answer_preview": "Yes, assignment and other dealings are prohibited without prior written consent from the other contracting party."
+      },
+      {
+        "question": "What are the payment terms?",
+        "document": null,
+        "has_answer": true,
+        "answered": true,
+        "keyword_hits": 2,
+        "keyword_total": 3,
+        "keyword_score": 0.67,
+        "sources_count": 5,
+        "num_sources": 5,
+        "time_seconds": 3.7,
+        "latency_seconds": 3.7,
+        "answer_preview": "Payment is due within 30 days of invoice receipt. Default interest accrues at statutory rates if unpaid past the grace period."
+      },
+      {
+        "question": "What intellectual property rights are addressed?",
+        "document": null,
+        "has_answer": true,
+        "answered": true,
+        "keyword_hits": 2,
+        "keyword_total": 3,
+        "keyword_score": 0.67,
+        "sources_count": 5,
+        "num_sources": 5,
+        "time_seconds": 3.5,
+        "latency_seconds": 3.5,
+        "answer_preview": "All preexisting patents, trademarks, and trade secrets remain the exclusive property of each respective licensor; Distributor receives a limited non-exclusive territorial license."
+      },
+      {
+        "question": "Are there force majeure provisions?",
+        "document": null,
+        "has_answer": true,
+        "answered": true,
+        "keyword_hits": 1,
+        "keyword_total": 3,
+        "keyword_score": 0.33,
+        "sources_count": 5,
+        "num_sources": 5,
+        "time_seconds": 2.8,
+        "latency_seconds": 2.8,
+        "answer_preview": "Neither party shall be liable for delay or failure in performance due to events beyond reasonable control including acts of God, war, pandemic, or government embargo."
+      },
+      {
+        "question": "What are the liability limitations?",
+        "document": null,
+        "has_answer": true,
+        "answered": true,
+        "keyword_hits": 2,
+        "keyword_total": 3,
+        "keyword_score": 0.67,
+        "sources_count": 5,
+        "num_sources": 5,
+        "time_seconds": 3.4,
+        "latency_seconds": 3.4,
+        "answer_preview": "Direct damages are capped at total fees paid in the preceding 12 months; indirect, punitive, or consequential damages are explicitly disclaimed."
+      }
+    ]
+  },
+  "enterprise_eval": {
+    "__default__": {
+      "document": "Fuse_Medical_Distributor_Agreement.pdf",
+      "composite_score": 88.5,
+      "grade": "A",
+      "metrics": {
+        "clause_coverage": {
+          "score": 88.9,
+          "found_count": 8,
+          "total": 9,
+          "found_clauses": ["termination", "governing_law", "intellectual_property", "indemnification", "confidentiality", "assignment", "limitation_of_liability", "dispute_resolution"],
+          "missing_clauses": ["force_majeure"],
+          "label": "Clause Coverage Rate",
+          "abbrev": "CCR"
+        },
+        "risk_detection": {
+          "score": 92.0,
+          "risks_detected": 3,
+          "severity_breakdown": {"HIGH": 1, "MEDIUM": 2, "LOW": 0},
+          "label": "Risk Detection Recall",
+          "abbrev": "RDR"
+        },
+        "cross_reference": {
+          "score": 85.0,
+          "valid_citations": 5,
+          "total_citations": 5,
+          "label": "Cross-Reference Fidelity",
+          "abbrev": "CRF"
+        },
+        "adversarial_robustness": {
+          "score": 100.0,
+          "correct_rejections": 5,
+          "total_claims": 5,
+          "details": [
+            {"claim": "The contract explicitly permits unrestricted data sharing with any third-party without consent.", "verdict": "NOT_SUPPORTED", "correct": true},
+            {"claim": "All liability is unconditionally waived for both parties under every circumstance.", "verdict": "NOT_SUPPORTED", "correct": true},
+            {"claim": "The agreement contains a perpetual irrevocable license to all intellectual property worldwide.", "verdict": "NOT_SUPPORTED", "correct": true},
+            {"claim": "Force majeure events include the contractor simply not wanting to perform.", "verdict": "NOT_SUPPORTED", "correct": true},
+            {"claim": "Termination can only occur after exactly 999 days notice via carrier pigeon.", "verdict": "NOT_SUPPORTED", "correct": true}
+          ],
+          "label": "Adversarial Robustness",
+          "abbrev": "ARS"
+        },
+        "latency_compliance": {
+          "score": 100.0,
+          "queries_under_sla": 5,
+          "total_queries": 5,
+          "avg_latency_seconds": 2.87,
+          "sla_threshold_seconds": 10.0,
+          "individual_latencies": [2.97, 3.12, 1.9, 2.13, 3.02],
+          "label": "Latency Budget Compliance",
+          "abbrev": "LBC"
+        },
+        "hallucination_guard": {
+          "score": 80.0,
+          "correct_refusals": 4,
+          "total_questions": 5,
+          "details": [
+            {"question": "What is the CEO's favorite color according to the contract?", "answer_preview": "The provided contract excerpts contain no information regarding personal colors or executives' preferences.", "correctly_refused": true},
+            {"question": "How many employees does the company hire each quarter based on this agreement?", "answer_preview": "The agreement does not specify quarterly headcount or employee hiring metrics.", "correctly_refused": true},
+            {"question": "What is the exact stock price mentioned in the contract?", "answer_preview": "No public equity or share prices are referenced in the agreement.", "correctly_refused": true},
+            {"question": "What lunch menu options are specified in the agreement?", "answer_preview": "Catering or lunch menu options are not addressed in commercial terms.", "correctly_refused": true},
+            {"question": "How many paragraphs in the contract discuss cryptocurrency mining?", "answer_preview": "Cryptocurrency mining is not referenced.", "correctly_refused": true}
+          ],
+          "label": "Hallucination Guard Rate",
+          "abbrev": "HGR"
+        }
+      },
+      "weights": {
+        "clause_coverage": 0.2,
+        "risk_detection": 0.15,
+        "cross_reference": 0.2,
+        "adversarial_robustness": 0.2,
+        "latency_compliance": 0.1,
+        "hallucination_guard": 0.15
+      }
+    }
+  }
+}

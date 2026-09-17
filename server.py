@@ -13,12 +13,13 @@ try:
 except ImportError:
     pass
 
-from typing import Optional, List, Any, Union
+from typing import Optional, List, Any, Union, Dict
 from datetime import datetime
-from fastapi import FastAPI, HTTPException, Query, UploadFile, File, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Query, UploadFile, File, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
+from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel
 
 from auditor_core.embeddings.vector_store import VectorStore
@@ -77,6 +78,37 @@ obligation_extractor: Optional[ObligationExtractor] = None
 
 # PDF filename to full path mapping cache
 pdf_path_map = {}
+
+# Evaluation benchmarks memory & file cache
+_eval_cache: Optional[Dict[str, Any]] = None
+_enterprise_eval_cache: Dict[str, Any] = {}
+EVAL_CACHE_FILE = Path("data/benchmarks_cache.json")
+
+
+def load_eval_cache():
+    global _eval_cache, _enterprise_eval_cache
+    if EVAL_CACHE_FILE.exists():
+        try:
+            with open(EVAL_CACHE_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                _eval_cache = data.get("cuad_eval")
+                _enterprise_eval_cache = data.get("enterprise_eval", {})
+                print("Evaluation benchmarks cache loaded.")
+        except Exception as e:
+            print(f"Failed to load evaluation cache: {e}")
+
+
+def save_eval_cache():
+    try:
+        EVAL_CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(EVAL_CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump({
+                "cuad_eval": _eval_cache,
+                "enterprise_eval": _enterprise_eval_cache,
+                "updated_at": datetime.now().isoformat()
+            }, f, indent=2)
+    except Exception as e:
+        print(f"Failed to save evaluation cache: {e}")
 
 
 def init_engines():
@@ -138,6 +170,7 @@ def init_engines():
 @app.on_event("startup")
 async def on_startup():
     init_engines()
+    load_eval_cache()
 
 
 # -------------------------------------------------------------
@@ -577,17 +610,60 @@ async def inspect_page_vlm(req: VLMAskRequest):
 
 
 @app.get("/api/eval")
-async def run_evaluation():
-    """Run built-in benchmark evaluation suite."""
-    summary = evaluator.run()
+async def run_evaluation(refresh: bool = Query(False, description="Force fresh benchmark calculation")):
+    """Run built-in benchmark evaluation suite (with caching & threadpool)."""
+    global _eval_cache
+    if not refresh and _eval_cache is not None:
+        return _eval_cache
+
+    if evaluator is None:
+        raise HTTPException(status_code=503, detail="Evaluator engine not initialized.")
+
+    summary = await run_in_threadpool(evaluator.run)
+    _eval_cache = summary
+    save_eval_cache()
     return summary
 
 
 @app.get("/api/enterprise-eval")
-async def run_enterprise_eval(document: Optional[str] = None):
-    """Run the 6-metric Enterprise Audit Score suite."""
-    result = enterprise_scorer.run_full_audit(document)
+async def run_enterprise_eval(
+    document: Optional[str] = Query(None, description="Document filename"),
+    refresh: bool = Query(False, description="Force fresh calculation"),
+):
+    """Run the 6-metric Enterprise Audit Score suite (with caching & threadpool)."""
+    global _enterprise_eval_cache
+    doc_key = document or "__default__"
+
+    if not refresh and doc_key in _enterprise_eval_cache:
+        return _enterprise_eval_cache[doc_key]
+
+    if enterprise_scorer is None:
+        raise HTTPException(status_code=503, detail="Enterprise scorer engine not initialized.")
+
+    result = await run_in_threadpool(enterprise_scorer.run_full_audit, document)
+    _enterprise_eval_cache[doc_key] = result
+    save_eval_cache()
     return result
+
+
+@app.get("/eval")
+async def handle_eval_route(
+    request: Request,
+    refresh: bool = Query(False, description="Force fresh benchmark calculation"),
+):
+    """Handle /eval for both browser SPA navigation and programmatic API consumption."""
+    accept_header = request.headers.get("accept", "").lower()
+    format_query = request.query_params.get("format", "").lower()
+
+    # If requested by a web browser expecting HTML, serve index.html
+    if "text/html" in accept_header and format_query != "json":
+        index_file = web_dir / "index.html"
+        if index_file.exists():
+            return FileResponse(index_file)
+        return HTMLResponse(content="<h1>Enterprise Auditor</h1><p>Web frontend initializing...</p>", status_code=200)
+
+    # Otherwise return JSON evaluation results
+    return await run_evaluation(refresh=refresh)
 
 
 @app.get("/api/export-pdf-report", response_class=HTMLResponse)

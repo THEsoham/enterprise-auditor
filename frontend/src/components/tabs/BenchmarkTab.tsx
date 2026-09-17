@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAudit } from '../../context/AuditContext';
 import { api } from '../../api/client';
 import type { EvalSummary, EnterpriseEvalSummary } from '../../types';
@@ -20,6 +20,7 @@ import {
   Award,
   ChevronDown,
   ChevronRight,
+  RefreshCw,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -86,12 +87,46 @@ export const BenchmarkTab: React.FC = () => {
   const [easData, setEasData] = useState<EnterpriseEvalSummary | null>(null);
   const [expandedMetric, setExpandedMetric] = useState<string | null>(null);
 
+  /* Auto-load cached benchmarks on mount */
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadInitialBenchmarks = async () => {
+      // 1. Load Enterprise Audit Score
+      setEasLoading(true);
+      try {
+        const eas = await api.runEnterpriseEval(selectedDocument || undefined, false);
+        if (isMounted) setEasData(eas);
+      } catch (err: any) {
+        console.warn('Initial EAS load note:', err);
+      } finally {
+        if (isMounted) setEasLoading(false);
+      }
+
+      // 2. Load CUAD Benchmark
+      setCuadLoading(true);
+      try {
+        const cuad = await api.runEval(false);
+        if (isMounted) setEvalData(cuad);
+      } catch (err: any) {
+        console.warn('Initial CUAD load note:', err);
+      } finally {
+        if (isMounted) setCuadLoading(false);
+      }
+    };
+
+    loadInitialBenchmarks();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedDocument]);
+
   /* ---- CUAD handler ---- */
   const handleRunCUAD = async () => {
     setCuadLoading(true);
-    setEvalData(null);
     try {
-      const data = await api.runEval();
+      const data = await api.runEval(true);
       setEvalData(data);
       showToast('CUAD benchmark evaluation completed successfully', 'success');
     } catch (err: any) {
@@ -104,9 +139,8 @@ export const BenchmarkTab: React.FC = () => {
   /* ---- Enterprise Audit Score handler ---- */
   const handleRunEAS = async () => {
     setEasLoading(true);
-    setEasData(null);
     try {
-      const data = await api.runEnterpriseEval(selectedDocument || undefined);
+      const data = await api.runEnterpriseEval(selectedDocument || undefined, true);
       setEasData(data);
       showToast(
         `Enterprise Audit Score: ${data.composite_score}/100 (${data.grade})`,
@@ -158,8 +192,8 @@ export const BenchmarkTab: React.FC = () => {
             disabled={easLoading}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-all disabled:opacity-50 cursor-pointer self-start sm:self-auto"
           >
-            {easLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Award className="w-4 h-4" />}
-            {easLoading ? 'Running 6 Metrics...' : 'Run Enterprise Audit'}
+            {easLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : easData ? <RefreshCw className="w-4 h-4" /> : <Award className="w-4 h-4" />}
+            {easLoading ? 'Running 6 Metrics...' : easData ? 'Re-run Enterprise Audit' : 'Run Enterprise Audit'}
           </button>
         </div>
 
@@ -365,51 +399,60 @@ export const BenchmarkTab: React.FC = () => {
             disabled={cuadLoading}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-all disabled:opacity-50 cursor-pointer self-start sm:self-auto"
           >
-            {cuadLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-            {cuadLoading ? 'Evaluating...' : 'Run CUAD Evaluation Suite'}
+            {cuadLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : evalData ? <RefreshCw className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            {cuadLoading ? 'Evaluating...' : evalData ? 'Re-run CUAD Benchmark' : 'Run CUAD Evaluation Suite'}
           </button>
         </div>
 
         {/* CUAD KPI Cards */}
-        {evalData && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
-              <div className="text-xs text-slate-500 mb-1 flex items-center gap-1.5 font-medium">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Answer Rate
-              </div>
-              <div className="text-2xl font-bold text-emerald-700 font-mono">
-                {(evalData.answer_rate * 100).toFixed(1)}%
-              </div>
-            </div>
+        {evalData && (() => {
+          const rawAnswerRate = evalData.answer_rate ?? 0;
+          const displayAnswerRate = rawAnswerRate <= 1.0 ? rawAnswerRate * 100 : rawAnswerRate;
+          const rawKwScore = evalData.keyword_score ?? evalData.avg_keyword_score ?? 0;
+          const displayKwScore = rawKwScore <= 1.0 ? rawKwScore * 100 : rawKwScore;
+          const avgLatency = evalData.avg_latency_s ?? evalData.avg_time_seconds ?? 0;
+          const avgSources = evalData.avg_sources ?? 0;
 
-            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
-              <div className="text-xs text-slate-500 mb-1 flex items-center gap-1.5 font-medium">
-                <Target className="w-3.5 h-3.5 text-blue-600" /> Keyword Score
+          return (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                <div className="text-xs text-slate-500 mb-1 flex items-center gap-1.5 font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Answer Rate
+                </div>
+                <div className="text-2xl font-bold text-emerald-700 font-mono">
+                  {displayAnswerRate.toFixed(1)}%
+                </div>
               </div>
-              <div className="text-2xl font-bold text-blue-700 font-mono">
-                {(evalData.keyword_score * 100).toFixed(1)}%
-              </div>
-            </div>
 
-            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
-              <div className="text-xs text-slate-500 mb-1 flex items-center gap-1.5 font-medium">
-                <Clock className="w-3.5 h-3.5 text-amber-600" /> Avg. Latency
+              <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                <div className="text-xs text-slate-500 mb-1 flex items-center gap-1.5 font-medium">
+                  <Target className="w-3.5 h-3.5 text-blue-600" /> Keyword Score
+                </div>
+                <div className="text-2xl font-bold text-blue-700 font-mono">
+                  {displayKwScore.toFixed(1)}%
+                </div>
               </div>
-              <div className="text-2xl font-bold text-slate-800 font-mono">
-                {evalData.avg_latency_s.toFixed(2)}s
-              </div>
-            </div>
 
-            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
-              <div className="text-xs text-slate-500 mb-1 flex items-center gap-1.5 font-medium">
-                <FileCheck className="w-3.5 h-3.5 text-cyan-600" /> Sources / Query
+              <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                <div className="text-xs text-slate-500 mb-1 flex items-center gap-1.5 font-medium">
+                  <Clock className="w-3.5 h-3.5 text-amber-600" /> Avg. Latency
+                </div>
+                <div className="text-2xl font-bold text-slate-800 font-mono">
+                  {avgLatency.toFixed(2)}s
+                </div>
               </div>
-              <div className="text-2xl font-bold text-cyan-700 font-mono">
-                {evalData.avg_sources.toFixed(1)}
+
+              <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                <div className="text-xs text-slate-500 mb-1 flex items-center gap-1.5 font-medium">
+                  <FileCheck className="w-3.5 h-3.5 text-cyan-600" /> Sources / Query
+                </div>
+                <div className="text-2xl font-bold text-cyan-700 font-mono">
+                  {avgSources.toFixed(1)}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* CUAD Results Table */}
         {cuadLoading ? (
@@ -447,36 +490,44 @@ export const BenchmarkTab: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredResults.map((res, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                      <td className="py-3 px-4 font-mono text-slate-400">{idx + 1}</td>
-                      <td className="py-3 px-4 font-semibold text-slate-800">{res.question}</td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-bold border ${
-                            res.answered
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                              : 'bg-rose-50 text-rose-700 border-rose-200'
-                          }`}
-                        >
-                          {res.answered ? (
-                            <>
-                              <CheckCircle2 className="w-3 h-3" /> Answered
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="w-3 h-3" /> Unresolved
-                            </>
-                          )}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 font-mono font-medium text-slate-700">
-                        {(res.keyword_score * 100).toFixed(0)}%
-                      </td>
-                      <td className="py-3 px-4 font-mono text-slate-500">{res.latency_seconds.toFixed(2)}s</td>
-                      <td className="py-3 px-4 font-mono text-slate-500">{res.num_sources}</td>
-                    </tr>
-                  ))}
+                  {filteredResults.map((res, idx) => {
+                    const isAnswered = res.answered ?? res.has_answer ?? false;
+                    const rawKw = res.keyword_score ?? 0;
+                    const displayKw = rawKw <= 1.0 ? rawKw * 100 : rawKw;
+                    const latency = res.latency_seconds ?? res.time_seconds ?? 0;
+                    const sources = res.num_sources ?? res.sources_count ?? 0;
+
+                    return (
+                      <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                        <td className="py-3 px-4 font-mono text-slate-400">{idx + 1}</td>
+                        <td className="py-3 px-4 font-semibold text-slate-800">{res.question}</td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-bold border ${
+                              isAnswered
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : 'bg-rose-50 text-rose-700 border-rose-200'
+                            }`}
+                          >
+                            {isAnswered ? (
+                              <>
+                                <CheckCircle2 className="w-3 h-3" /> Answered
+                              </>
+                            ) : (
+                              <>
+                                <XCircle className="w-3 h-3" /> Unresolved
+                              </>
+                            )}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 font-mono font-medium text-slate-700">
+                          {displayKw.toFixed(0)}%
+                        </td>
+                        <td className="py-3 px-4 font-mono text-slate-500">{latency.toFixed(2)}s</td>
+                        <td className="py-3 px-4 font-mono text-slate-500">{sources}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

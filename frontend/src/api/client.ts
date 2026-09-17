@@ -124,12 +124,18 @@ export const api = {
       `${BASE_URL}/images?document=${encodeURIComponent(document)}`
     ),
 
-  runEval: () => fetchJson<EvalSummary>(`${BASE_URL}/eval`),
+  runEval: (refresh = false) =>
+    fetchJson<EvalSummary>(`${BASE_URL}/eval${refresh ? '?refresh=true' : ''}`),
 
-  runEnterpriseEval: (document?: string) =>
-    fetchJson<EnterpriseEvalSummary>(
-      `${BASE_URL}/enterprise-eval${document ? `?document=${encodeURIComponent(document)}` : ''}`
-    ),
+  runEnterpriseEval: (document?: string, refresh = false) => {
+    const params = new URLSearchParams();
+    if (document) params.append('document', document);
+    if (refresh) params.append('refresh', 'true');
+    const query = params.toString();
+    return fetchJson<EnterpriseEvalSummary>(
+      `${BASE_URL}/enterprise-eval${query ? `?${query}` : ''}`
+    );
+  },
 
   uploadContract: async (file: File) => {
     const formData = new FormData();

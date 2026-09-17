@@ -76,15 +76,18 @@ class Evaluator:
                 "question": q["question"],
                 "document": q.get("document"),
                 "has_answer": has_answer,
+                "answered": has_answer,
                 "keyword_hits": keyword_hits,
                 "keyword_total": keyword_total,
                 "keyword_score": (
-                    keyword_hits / keyword_total
+                    round(keyword_hits / keyword_total, 2)
                     if keyword_total > 0
-                    else None
+                    else 0.0
                 ),
                 "sources_count": len(response["sources"]),
-                "time_seconds": round(elapsed, 1),
+                "num_sources": len(response["sources"]),
+                "time_seconds": round(elapsed, 2),
+                "latency_seconds": round(elapsed, 2),
                 "answer_preview": (
                     response["answer"][:200]
                 ),
@@ -100,13 +103,13 @@ class Evaluator:
         total = len(results)
 
         answered = sum(
-            1 for r in results if r["has_answer"]
+            1 for r in results if r.get("has_answer") or r.get("answered")
         )
 
         keyword_scores = [
             r["keyword_score"]
             for r in results
-            if r["keyword_score"] is not None
+            if r.get("keyword_score") is not None
         ]
 
         avg_keyword = (
@@ -116,31 +119,30 @@ class Evaluator:
         )
 
         avg_time = (
-            sum(r["time_seconds"] for r in results)
+            sum(r.get("time_seconds", r.get("latency_seconds", 0)) for r in results)
             / total
             if total
             else 0
         )
 
         avg_sources = (
-            sum(r["sources_count"] for r in results)
+            sum(r.get("sources_count", r.get("num_sources", 0)) for r in results)
             / total
             if total
             else 0
         )
 
+        answer_pct = round(answered / total * 100, 1) if total else 0.0
+        kw_score = round(avg_keyword * 100, 1)
+
         return {
             "total_questions": total,
             "answered": answered,
-            "answer_rate": (
-                round(answered / total * 100, 1)
-                if total
-                else 0
-            ),
-            "avg_keyword_score": round(
-                avg_keyword * 100, 1
-            ),
-            "avg_time_seconds": round(avg_time, 1),
+            "answer_rate": answer_pct,
+            "keyword_score": kw_score,
+            "avg_keyword_score": kw_score,
+            "avg_latency_s": round(avg_time, 2),
+            "avg_time_seconds": round(avg_time, 2),
             "avg_sources": round(avg_sources, 1),
             "results": results,
         }

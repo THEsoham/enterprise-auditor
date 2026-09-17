@@ -141,17 +141,28 @@ export interface ImageItem {
 
 export interface EvalResultItem {
   question: string;
-  answered: boolean;
+  answered?: boolean;
+  has_answer?: boolean;
   keyword_score: number;
-  latency_seconds: number;
-  num_sources: number;
+  latency_seconds?: number;
+  time_seconds?: number;
+  num_sources?: number;
+  sources_count?: number;
+  answer_preview?: string;
+  document?: string | null;
+  keyword_hits?: number;
+  keyword_total?: number;
 }
 
 export interface EvalSummary {
   answer_rate: number;
-  keyword_score: number;
-  avg_latency_s: number;
+  keyword_score?: number;
+  avg_keyword_score?: number;
+  avg_latency_s?: number;
+  avg_time_seconds?: number;
   avg_sources: number;
+  total_questions?: number;
+  answered?: number;
   results: EvalResultItem[];
 }
 
