@@ -188,4 +188,88 @@ export interface EnterpriseEvalSummary {
   weights: Record<string, number>;
 }
 
-export const TYPES_VERSION = '1.1.0';
+export interface PlainRiskItem {
+  id: string;
+  clause: string;
+  severity: 'HIGH' | 'MEDIUM' | 'LOW';
+  title: string;
+  why_it_matters: string;
+  how_to_fix: string;
+  quote: string;
+  page?: number | string;
+}
+
+export interface MissingProtectionItem {
+  clause: string;
+  name: string;
+  status: string;
+  why_it_matters: string;
+  suggested_text: string;
+}
+
+export interface RelationshipNode {
+  id: string;
+  label: string;
+  full_name?: string;
+  type: string;
+  color: string;
+  size: number;
+  description?: string;
+}
+
+export interface RelationshipEdge {
+  from: string;
+  to: string;
+  label: string;
+  color: string;
+}
+
+export interface AuditSummaryResponse {
+  document: string;
+  health_score: number;
+  health_status: string;
+  health_badge: 'GREEN' | 'YELLOW' | 'RED';
+  deal_breakers: PlainRiskItem[];
+  watch_out: PlainRiskItem[];
+  safe_provisions: PlainRiskItem[];
+  missing_protections: MissingProtectionItem[];
+  graph: {
+    nodes: RelationshipNode[];
+    edges: RelationshipEdge[];
+    stats: {
+      nodes_count: number;
+      edges_count: number;
+    };
+  };
+}
+
+export interface DebateRound {
+  round: number;
+  proposer: {
+    model: string;
+    statement: string;
+  };
+  skeptic: {
+    model: string;
+    challenge?: string;
+    exact_quote?: string;
+    severity?: string;
+    verdict?: string;
+    ruling?: string;
+  };
+}
+
+export interface DebateResponse {
+  status: string;
+  verdict: 'VERIFIED' | 'REFINED_VERIFIED' | 'AMBIGUOUS' | 'UNSUPPORTED' | string;
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW' | string;
+  document: string;
+  question: string;
+  rounds: DebateRound[];
+  final_finding: string;
+  plain_english: string;
+  suggested_remedy: string;
+  evidence_snippets: string[];
+}
+
+export const TYPES_VERSION = '2.0.0';

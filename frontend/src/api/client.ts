@@ -13,7 +13,9 @@ import type {
   TableItem,
   ImageItem,
   EvalSummary,
-  EnterpriseEvalSummary
+  EnterpriseEvalSummary,
+  AuditSummaryResponse,
+  DebateResponse
 } from '../types';
 
 const BASE_URL = '/api';
@@ -91,6 +93,27 @@ export const api = {
     fetchJson<VerifyResult>(`${BASE_URL}/verify`, {
       method: 'POST',
       body: JSON.stringify({ finding, evidence }),
+    }),
+
+  getAuditSummary: (document?: string | null) => {
+    const query = document ? `?document=${encodeURIComponent(document)}` : '';
+    return fetchJson<AuditSummaryResponse>(`${BASE_URL}/audit-summary${query}`);
+  },
+
+  runDebate: (
+    question: string,
+    document?: string | null,
+    initial_finding?: string | null,
+    evidence?: any
+  ) =>
+    fetchJson<DebateResponse>(`${BASE_URL}/debate`, {
+      method: 'POST',
+      body: JSON.stringify({
+        question,
+        document: document || null,
+        initial_finding: initial_finding || null,
+        evidence: evidence || null,
+      }),
     }),
 
   getKnowledgeGraph: (document: string) =>

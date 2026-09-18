@@ -6,14 +6,14 @@ import { VerifyModal } from './components/common/VerifyModal';
 import { EvidenceModal } from './components/common/EvidenceModal';
 import { Toast } from './components/common/Toast';
 
+import { DocumentHealthTab } from './components/tabs/DocumentHealthTab';
+import { CourtroomDebateTab } from './components/tabs/CourtroomDebateTab';
+import { VisualScannerTab } from './components/tabs/VisualScannerTab';
+
 import { CopilotTab } from './components/tabs/CopilotTab';
 import { ClauseStudioTab } from './components/tabs/ClauseStudioTab';
-import { RiskAuditTab } from './components/tabs/RiskAuditTab';
-import { MissingClauseTab } from './components/tabs/MissingClauseTab';
 import { ComparatorTab } from './components/tabs/ComparatorTab';
-import { KnowledgeGraphTab } from './components/tabs/KnowledgeGraphTab';
 import { ObligationsTab } from './components/tabs/ObligationsTab';
-import { TablesAndImagesTab } from './components/tabs/TablesAndImagesTab';
 import { AuditMemoTab } from './components/tabs/AuditMemoTab';
 import { BenchmarkTab } from './components/tabs/BenchmarkTab';
 
@@ -22,36 +22,53 @@ const AppContent: React.FC = () => {
 
   const renderActiveTab = () => {
     switch (activeTab) {
+      // 3 Core USPs
+      case 'health':
+      case 'document-health':
+      case 'redflags':
+        return <DocumentHealthTab />;
+      case 'debate':
+      case 'courtroom':
+      case 'courtroom-debate':
+        return <CourtroomDebateTab />;
+      case 'scanner':
+      case 'visual':
+      case 'signatures':
+        return <VisualScannerTab />;
+
+      // Advanced & Reports
       case 'copilot':
         return <CopilotTab />;
-      case 'clauses':
-      case 'clause-studio':
-        return <ClauseStudioTab />;
-      case 'risks':
-      case 'risk-audit':
-        return <RiskAuditTab />;
-      case 'missing':
-      case 'missing-clauses':
-        return <MissingClauseTab />;
-      case 'compare':
-      case 'comparator':
-        return <ComparatorTab />;
-      case 'graph':
-      case 'knowledge-graph':
-        return <KnowledgeGraphTab />;
-      case 'obligations':
-        return <ObligationsTab />;
-      case 'tables':
-      case 'tables-images':
-        return <TablesAndImagesTab />;
       case 'report':
       case 'memo':
         return <AuditMemoTab />;
       case 'eval':
       case 'benchmark':
         return <BenchmarkTab />;
+
+      // Legacy fallbacks
+      case 'clauses':
+      case 'clause-studio':
+        return <ClauseStudioTab />;
+      case 'risks':
+      case 'risk-audit':
+        return <DocumentHealthTab />;
+      case 'missing':
+      case 'missing-clauses':
+        return <DocumentHealthTab />;
+      case 'compare':
+      case 'comparator':
+        return <ComparatorTab />;
+      case 'graph':
+      case 'knowledge-graph':
+        return <DocumentHealthTab />;
+      case 'obligations':
+        return <ObligationsTab />;
+      case 'tables':
+      case 'tables-images':
+        return <VisualScannerTab />;
       default:
-        return <CopilotTab />;
+        return <DocumentHealthTab />;
     }
   };
 

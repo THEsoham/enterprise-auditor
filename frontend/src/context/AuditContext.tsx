@@ -48,23 +48,32 @@ interface AuditContextType {
 const AuditContext = createContext<AuditContextType | undefined>(undefined);
 
 const TAB_ALIASES: Record<string, string> = {
+  health: 'health',
+  'document-health': 'health',
+  redflags: 'health',
+  debate: 'debate',
+  courtroom: 'debate',
+  'courtroom-debate': 'debate',
+  scanner: 'scanner',
+  visual: 'scanner',
+  signatures: 'scanner',
   copilot: 'copilot',
   ask: 'copilot',
   clauses: 'clauses',
   'clause-studio': 'clauses',
-  risks: 'risks',
-  risk: 'risks',
-  'risk-audit': 'risks',
-  missing: 'missing',
-  'missing-clauses': 'missing',
-  'missing-clause': 'missing',
+  risks: 'health',
+  risk: 'health',
+  'risk-audit': 'health',
+  missing: 'health',
+  'missing-clauses': 'health',
+  'missing-clause': 'health',
   compare: 'compare',
   comparator: 'compare',
-  graph: 'graph',
-  'knowledge-graph': 'graph',
+  graph: 'health',
+  'knowledge-graph': 'health',
   obligations: 'obligations',
-  tables: 'tables',
-  'tables-images': 'tables',
+  tables: 'scanner',
+  'tables-images': 'scanner',
   report: 'report',
   memo: 'report',
   eval: 'eval',
@@ -72,12 +81,12 @@ const TAB_ALIASES: Record<string, string> = {
 };
 
 function resolveTabFromUrl(): string {
-  if (typeof window === 'undefined') return 'copilot';
+  if (typeof window === 'undefined') return 'health';
   const path = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
   if (TAB_ALIASES[path]) return TAB_ALIASES[path];
   const hash = window.location.hash.replace(/^#+/, '').toLowerCase();
   if (TAB_ALIASES[hash]) return TAB_ALIASES[hash];
-  return 'copilot';
+  return 'health';
 }
 
 export const AuditProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

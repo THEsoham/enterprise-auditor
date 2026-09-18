@@ -306,6 +306,11 @@ def _query_gemini(prompt: str, max_tokens: int) -> str:
     )
 
 
+def query_gemini(prompt: str, max_tokens: int = 1000) -> str:
+    """Public helper to query Google Gemini for adversarial verification & critique."""
+    return _query_gemini(prompt, max_tokens)
+
+
 def _query_ollama(
     prompt: str,
     ollama_model: str,

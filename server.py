@@ -213,6 +213,14 @@ class GraphRequest(BaseModel):
     document: str
 
 
+class DebateRequest(BaseModel):
+    question: str
+    document: Optional[str] = None
+    initial_finding: Optional[str] = None
+    evidence: Optional[Union[List[Any], str]] = None
+    metadata: Optional[List[Any]] = None
+
+
 # -------------------------------------------------------------
 # API Endpoints
 # -------------------------------------------------------------
@@ -497,6 +505,303 @@ async def verify_finding(req: VerifyRequest):
         metadata=req.metadata,
     )
     return result
+
+
+# -------------------------------------------------------------
+# Plain-English Document Health & Courtroom Debate Endpoints
+# -------------------------------------------------------------
+
+_audit_summary_cache: Dict[str, Any] = {}
+
+def _build_plain_audit_summary(doc_name: str) -> Dict[str, Any]:
+    if doc_name in _audit_summary_cache:
+        return _audit_summary_cache[doc_name]
+
+    # Detect risks using existing risk_detector
+    try:
+        raw_risks = risk_detector.detect(doc_name)
+    except Exception as e:
+        print(f"Risk detection note for {doc_name}: {e}")
+        raw_risks = []
+
+    # Human-friendly dictionary mapping legal terms to zero-jargon explanations
+    plain_risk_map = {
+        "indemnification": {
+            "title": "You May Have to Pay Their Legal Bills (Broad Indemnity)",
+            "why_it_matters": "If someone sues them—even if it was partly their own fault—this clause might force you to hire their lawyers and pay their damages.",
+            "how_to_fix": "Add: 'Each party\\'s indemnification obligation shall be limited strictly to direct damages caused solely by its own gross negligence or willful misconduct.'"
+        },
+        "liability": {
+            "title": "No Dollar Limit on How Much They Can Sue You For (Unlimited Liability)",
+            "why_it_matters": "Without an aggregate liability cap, an accidental breach could lead to claims far exceeding the value of the entire contract.",
+            "how_to_fix": "Add: 'In no event shall either party\\'s total aggregate liability exceed the total fees paid or payable under this agreement in the previous 12 months.'"
+        },
+        "termination": {
+            "title": "One-Sided Cancellation (They Can Cancel Early, But You Might Be Locked In)",
+            "why_it_matters": "If they can walk away anytime without cause while you are committed to perform, you risk unrecoverable investment.",
+            "how_to_fix": "Add: 'Either party may terminate this agreement for convenience upon thirty (30) days prior written notice to the other party.'"
+        },
+        "intellectual_property": {
+            "title": "They Might Claim Ownership of What You Created (Broad IP Assignment)",
+            "why_it_matters": "You might accidentally transfer your pre-existing tools, code, or templates unless specifically excluded.",
+            "how_to_fix": "Add: 'Each party retains sole ownership of all pre-existing intellectual property, background materials, and standard tools.'"
+        },
+        "payment": {
+            "title": "Unclear Payment Terms or Penalties",
+            "why_it_matters": "Vague milestones or undefined approval windows could delay your payment indefinitely.",
+            "how_to_fix": "Add: 'Invoices shall be paid within thirty (30) days of receipt. Invoices not disputed in writing within 15 days are deemed approved.'"
+        },
+        "confidentiality": {
+            "title": "Perpetual Secrecy With No Expiration Date",
+            "why_it_matters": "Being bound to secrecy forever creates unnecessary liability years after the business relationship ends.",
+            "how_to_fix": "Add: 'Confidentiality obligations shall expire three (3) years following the termination of this agreement.'"
+        },
+        "governing_law": {
+            "title": "Disputes Must Be Fought in a Distant Jurisdiction",
+            "why_it_matters": "If a disagreement happens, you would have to hire out-of-state attorneys and travel to court at high expense.",
+            "how_to_fix": "Add: 'The parties agree to attempt good-faith mediation prior to commencing legal action, located in the defendant\\'s jurisdiction.'"
+        },
+        "non_compete": {
+            "title": "Strict Restrictions on Working With Other Clients",
+            "why_it_matters": "Prevents you from taking on new business or serving clients in the same industry.",
+            "how_to_fix": "Add: 'Nothing in this agreement restricts either party from offering general services to third parties in the ordinary course of business.'"
+        }
+    }
+
+    deal_breakers = []
+    watch_out = []
+    safe_provisions = []
+
+    for r in raw_risks:
+        sev = str(r.get("severity", r.get("risk_level", ""))).upper()
+        clause_key = str(r.get("clause_type", r.get("category", ""))).lower().replace(" ", "_")
+        excerpt = r.get("excerpt", r.get("text", r.get("snippet", "")))[:280]
+
+        meta = plain_risk_map.get(clause_key, {
+            "title": r.get("title", f"Condition regarding {clause_key.replace('_', ' ').title()}"),
+            "why_it_matters": r.get("description", "Contains strict language that shifts responsibility onto you."),
+            "how_to_fix": "Request mutual terms so both parties are held to the exact same standard."
+        })
+
+        item = {
+            "id": f"risk_{len(deal_breakers) + len(watch_out) + len(safe_provisions)}",
+            "clause": clause_key.replace("_", " ").title(),
+            "severity": sev,
+            "title": meta["title"],
+            "why_it_matters": meta["why_it_matters"],
+            "how_to_fix": meta["how_to_fix"],
+            "quote": excerpt or "Identified in agreement text provisions.",
+            "page": r.get("page", 1)
+        }
+
+        if sev == "HIGH":
+            deal_breakers.append(item)
+        elif sev == "MEDIUM":
+            watch_out.append(item)
+        else:
+            safe_provisions.append(item)
+
+    # Check key missing protections
+    critical_checks = [
+        ("force_majeure", "Force Majeure (Disaster / Emergency Protection)", "Protects you if floods, war, government mandates, or emergencies stop work so you aren't sued for breach.", "Neither party shall be in default for delays resulting from acts of God, extreme weather, or events beyond reasonable control."),
+        ("liability", "Limitation of Liability (Dollar Cap)", "Protects you by capping the maximum monetary damages either party could ever claim.", "Neither party's total aggregate liability under this agreement shall exceed total amounts paid in the previous 12 months."),
+        ("termination", "Grace Period / Right to Cure Before Termination", "Gives you a guaranteed 30-day window to fix any honest mistake before the contract is cancelled.", "Prior to termination for breach, the non-breaching party shall provide 30 days written notice specifying the breach to permit cure.")
+    ]
+
+    missing_protections = []
+    for check_key, check_name, why_needed, fix_text in critical_checks:
+        try:
+            chk = missing_detector.check(doc_name, check_key)
+            if not chk.get("found", False):
+                missing_protections.append({
+                    "clause": check_key,
+                    "name": check_name,
+                    "status": "MISSING",
+                    "why_it_matters": why_needed,
+                    "suggested_text": fix_text
+                })
+        except Exception:
+            pass
+
+    # If no risks were found at all, populate default safe item
+    if not deal_breakers and not watch_out and not safe_provisions:
+        safe_provisions.append({
+            "id": "safe_1",
+            "clause": "General Terms",
+            "severity": "LOW",
+            "title": "Standard Commercial Structure",
+            "why_it_matters": "The document follows established contracting conventions without anomalous clauses.",
+            "how_to_fix": "Verify that dates, compensation amounts, and signature blocks match expectations.",
+            "quote": "General agreement definitions and structure.",
+            "page": 1
+        })
+
+    # Calculate 0-100 Health Score
+    base_score = 98
+    deduction = (len(deal_breakers) * 15) + (len(watch_out) * 6) + (len(missing_protections) * 8)
+    health_score = max(18, min(96, base_score - deduction))
+
+    if health_score >= 80:
+        health_status = "Protected & Fair"
+        health_badge = "GREEN"
+    elif health_score >= 60:
+        health_status = "Needs Caution & Negotiation"
+        health_badge = "YELLOW"
+    else:
+        health_status = "High Risk — Unbalanced"
+        health_badge = "RED"
+
+    # Build lightweight visual relationship graph
+    doc_node_id = f"doc_{doc_name}"
+    nodes = [
+        {
+            "id": doc_node_id,
+            "label": doc_name.replace(".pdf", "").replace(".PDF", "")[:24] + "...",
+            "full_name": doc_name,
+            "type": "document",
+            "color": "#3b82f6",
+            "size": 28,
+            "description": "Main Contract Document"
+        }
+    ]
+    edges = []
+
+    for i, db in enumerate(deal_breakers[:4]):
+        n_id = f"db_{i}"
+        nodes.append({
+            "id": n_id,
+            "label": db["clause"] + " (Deal-Breaker)",
+            "type": "deal_breaker",
+            "color": "#ef4444",
+            "size": 20,
+            "description": db["title"]
+        })
+        edges.append({
+            "from": doc_node_id,
+            "to": n_id,
+            "label": "exposes severe risk",
+            "color": "#ef4444"
+        })
+
+    for i, wo in enumerate(watch_out[:4]):
+        n_id = f"wo_{i}"
+        nodes.append({
+            "id": n_id,
+            "label": wo["clause"] + " (Watch Out)",
+            "type": "warning",
+            "color": "#f59e0b",
+            "size": 16,
+            "description": wo["title"]
+        })
+        edges.append({
+            "from": doc_node_id,
+            "to": n_id,
+            "label": "requires caution",
+            "color": "#f59e0b"
+        })
+
+    for i, mp in enumerate(missing_protections[:3]):
+        n_id = f"mp_{i}"
+        nodes.append({
+            "id": n_id,
+            "label": mp["clause"].replace("_", " ").title() + " (Missing)",
+            "type": "missing",
+            "color": "#ec4899",
+            "size": 15,
+            "description": mp["why_it_matters"]
+        })
+        edges.append({
+            "from": doc_node_id,
+            "to": n_id,
+            "label": "omitted protection",
+            "color": "#ec4899"
+        })
+
+    for i, sp in enumerate(safe_provisions[:3]):
+        n_id = f"sp_{i}"
+        nodes.append({
+            "id": n_id,
+            "label": sp["clause"] + " (Safe)",
+            "type": "safe",
+            "color": "#10b981",
+            "size": 14,
+            "description": sp["title"]
+        })
+        edges.append({
+            "from": doc_node_id,
+            "to": n_id,
+            "label": "standard term",
+            "color": "#10b981"
+        })
+
+    summary_result = {
+        "document": doc_name,
+        "health_score": health_score,
+        "health_status": health_status,
+        "health_badge": health_badge,
+        "deal_breakers": deal_breakers,
+        "watch_out": watch_out,
+        "safe_provisions": safe_provisions,
+        "missing_protections": missing_protections,
+        "graph": {
+            "nodes": nodes,
+            "edges": edges,
+            "stats": {
+                "nodes_count": len(nodes),
+                "edges_count": len(edges)
+            }
+        }
+    }
+    _audit_summary_cache[doc_name] = summary_result
+    return summary_result
+
+
+@app.get("/api/audit-summary")
+async def get_audit_summary(
+    document: Optional[str] = Query(None, description="Document filename")
+):
+    """Return single-glance Document Health Score, 3 plain-English buckets, missing guards, and relationship map."""
+    doc_name = document
+    if not doc_name:
+        all_docs = list(pdf_path_map.keys())
+        if all_docs:
+            preferred = [d for d in all_docs if any(k in d.lower() for k in ["agreement", "contract", "affiliate", "distributor"])]
+            doc_name = preferred[0] if preferred else all_docs[0]
+        else:
+            raise HTTPException(status_code=400, detail="Document parameter required and no contracts found.")
+
+    res = await run_in_threadpool(_build_plain_audit_summary, doc_name)
+    return res
+
+
+@app.post("/api/debate")
+async def run_ai_debate(req: DebateRequest):
+    """Conduct multi-round adversarial courtroom debate between OpenAI and Gemini."""
+    doc_name = req.document
+    if not doc_name and list(pdf_path_map.keys()):
+        all_docs = list(pdf_path_map.keys())
+        preferred = [d for d in all_docs if any(k in d.lower() for k in ["agreement", "contract", "affiliate", "distributor"])]
+        doc_name = preferred[0] if preferred else all_docs[0]
+
+    evidence = req.evidence
+    if not evidence:
+        try:
+            retrieval_res = retriever.retrieve(req.question, doc_name=doc_name, top_k=4)
+            evidence = [r.get("text", "") for r in retrieval_res] if retrieval_res else []
+        except Exception as e:
+            print(f"Retrieval error for debate: {e}")
+            evidence = []
+
+    res = await run_in_threadpool(
+        verifier.multi_turn_debate,
+        question=req.question,
+        evidence=evidence,
+        initial_finding=req.initial_finding,
+        document_name=doc_name,
+        metadata=req.metadata,
+        max_rounds=2,
+    )
+    return res
 
 
 @app.post("/api/graph")

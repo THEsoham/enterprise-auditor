@@ -7,15 +7,11 @@ import {
   UploadCloud,
   MessageSquareText,
   ScrollText,
-  AlertTriangle,
-  HelpCircle,
-  Columns3,
-  Network,
-  Clock,
-  Image,
   FileSignature,
   FlaskConical,
   CheckCircle2,
+  ShieldCheck,
+  Scale,
 } from 'lucide-react';
 import { useAudit } from '../../context/AuditContext';
 import { api } from '../../api/client';
@@ -48,27 +44,35 @@ export const Sidebar: React.FC = () => {
 
   const navGroups: { label: string; items: NavItem[] }[] = [
     {
-      label: 'AUDIT & ANALYSIS',
+      label: 'CORE AUDITOR (3 USPs)',
       items: [
-        { id: 'copilot', label: 'Ask Copilot', icon: MessageSquareText, badge: 'Q&A' },
-        { id: 'clauses', label: 'Clause Studio', icon: ScrollText, badge: '9 Clauses' },
-        { id: 'risks', label: 'Risk & Compliance', icon: AlertTriangle, badge: 'Audit', alert: true },
-        { id: 'missing', label: 'Missing Clauses', icon: HelpCircle, badge: 'Check' },
+        {
+          id: 'health',
+          label: 'Health & Red Flags',
+          icon: ShieldCheck,
+          badge: 'Score 0-100',
+          alert: true,
+        },
+        {
+          id: 'debate',
+          label: 'AI Courtroom Debate',
+          icon: Scale,
+          badge: 'OpenAI vs Gemini',
+          cyan: true,
+        },
+        {
+          id: 'scanner',
+          label: 'Signatures & Scanner',
+          icon: FileSignature,
+          badge: 'Execution & Fees',
+        },
       ],
     },
     {
-      label: 'CROSS-CONTRACT TOOLS',
+      label: 'ADVANCED SUITE',
       items: [
-        { id: 'compare', label: 'Compare Contracts', icon: Columns3, badge: 'Matrix' },
-        { id: 'graph', label: 'Contract Map', icon: Network, badge: 'Graph' },
-        { id: 'obligations', label: 'Deadlines & Duties', icon: Clock, badge: 'Timeline' },
-        { id: 'tables', label: 'Tables & Schedules', icon: Image, badge: 'VLM', cyan: true },
-      ],
-    },
-    {
-      label: 'REPORTS & BENCHMARKS',
-      items: [
-        { id: 'report', label: 'Audit Memorandum', icon: FileSignature, badge: 'Report' },
+        { id: 'copilot', label: 'Ask Copilot Q&A', icon: MessageSquareText, badge: 'Q&A' },
+        { id: 'report', label: 'Due Diligence Memo', icon: ScrollText, badge: 'Report' },
         { id: 'eval', label: 'Accuracy Benchmark', icon: FlaskConical, badge: 'CUAD' },
       ],
     },
